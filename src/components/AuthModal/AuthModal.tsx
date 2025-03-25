@@ -9,10 +9,49 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isRegister, setIsRegister] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
+  const handleSubmit = async () => {
+    setLoading(true);
+
+    const url = isRegister
+      ? "http://localhost:4200/api/v1/auth/sign-up"
+      : "http://localhost:4200/api/v1/auth/sign-in";
+
+    const body = isRegister
+      ? { name, email, password }
+      : { email, password };
+
+      console.log("Отправляем данные:", body);
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Ошибка при авторизации");
+      }
+      const message = isRegister
+        ? "Пользователь зарегистрирован"
+        : "Вход пользователя";
+      console.log(message, data);
+      console.log("Успех:", data);
+
+      onClose(); // Закрываем модальное окно при успешном входе/регистрации
+    } catch (error) {
+      console.error("Ошибка:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -23,7 +62,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           className="fixed inset-0 flex items-center justify-center 
           bg-[linear-gradient(53.187deg,_#52576E_0%,_#AFAEAE_25%,_#CCC6BA_50%,_#AEAEAE_75%,_#606777_100%)] 
           backdrop-blur-3xl z-50 text-center font-istok"
-          onClick={handleBackdropClick}
+          onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -36,9 +75,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               {isRegister ? "Регистрация" : "Вход"}
             </h2>
             <p className="text-gray-600 mb-4">
-              {isRegister
-                ? "Создайте новый аккаунт!"
-                : "Введите данные для входа!"}
+              {isRegister ? "Создайте новый аккаунт!" : "Введите данные для входа!"}
             </p>
 
             <div className="flex flex-col gap-3">
@@ -47,20 +84,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   type="text"
                   placeholder="Имя"
                   className="border p-3 rounded-3xl"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               )}
               <input
                 type="email"
                 placeholder="Email"
                 className="border p-3 rounded-3xl"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
               <input
                 type="password"
                 placeholder="Пароль"
                 className="border p-3 rounded-3xl"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
-              <Button variant="secondary">
-                {isRegister ? "Зарегистрироваться" : "Войти"}
+              <Button variant="secondary" onClick={handleSubmit} disabled={loading}>
+                {loading ? "Загрузка..." : isRegister ? "Зарегистрироваться" : "Войти"}
               </Button>
               <div className="text-center">
                 {isRegister ? (
