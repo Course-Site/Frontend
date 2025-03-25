@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../Button/Button";
+import { useDispatch, useSelector } from "react-redux";
+import { signIn, signUp } from "../../store/authSlice";
+import { AppDispatch, RootState } from "../../store/store";
+
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -8,51 +12,21 @@ interface AuthModalProps {
 }
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading } = useSelector((state: RootState) => state.auth);
+
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
-    setLoading(true);
-
-    const url = isRegister
-      ? "http://localhost:4200/api/v1/auth/sign-up"
-      : "http://localhost:4200/api/v1/auth/sign-in";
-
-    const body = isRegister
-      ? { name, email, password }
-      : { email, password };
-
-      console.log("Отправляем данные:", body);
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Ошибка при авторизации");
-      }
-      const message = isRegister
-        ? "Пользователь зарегистрирован"
-        : "Вход пользователя";
-      console.log(message, data);
-      console.log("Успех:", data);
-
-      onClose(); // Закрываем модальное окно при успешном входе/регистрации
-    } catch (error) {
-      console.error("Ошибка:", error);
-    } finally {
-      setLoading(false);
+  const handleSubmit = () => {
+    if (isRegister) {
+      dispatch(signUp({ name, email, password }));
+    } else {
+      dispatch(signIn({ email, password }));
     }
+    onClose();
   };
 
   return (
