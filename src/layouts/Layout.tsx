@@ -11,7 +11,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <div className="flex-grow pt-16">
-        <main className="container mx-auto px-6 py-10">
+        <main className="container mx-auto">
           {children}
         </main>
       </div>
@@ -19,5 +19,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     </div>
   );
 };
+
 
 export default Layout;

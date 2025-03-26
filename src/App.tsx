@@ -1,11 +1,13 @@
 import Layout from "./layouts/Layout"
+import MainPage from "./pages/MainPage"
 
 function App() {
 
   return (
     <>
       <Layout>
-        <div className="mt-20 p-6">
+        <MainPage />
+        {/* <div>
             <h1 className="text-3xl font-bold">Добро пожаловать!</h1>
             <p className="mt-4 text-gray-600">Здесь будет контент...</p>
             <p className="mt-4 text-gray-600">Здесь будет контент...</p>
@@ -73,7 +75,7 @@ function App() {
             <p className="mt-4 text-gray-600">Здесь будет контент...</p>
             <p className="mt-4 text-gray-600">Здесь будет контент...</p>
             <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-          </div>
+          </div> */}
       </Layout>
     </>
   )
