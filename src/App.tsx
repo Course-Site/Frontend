@@ -1,82 +1,20 @@
 import Layout from "./layouts/Layout"
+import LearningPage from "./pages/LearningPage";
 import MainPage from "./pages/MainPage"
+import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 
 function App() {
 
   return (
     <>
-      <Layout>
-        <MainPage />
-        {/* <div>
-            <h1 className="text-3xl font-bold">Добро пожаловать!</h1>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-            <p className="mt-4 text-gray-600">Здесь будет контент...</p>
-          </div> */}
-      </Layout>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<MainPage />} />
+            <Route path="/learning" element={<LearningPage />} />
+          </Routes>
+        </Layout>
+      </Router>
     </>
   )
 }

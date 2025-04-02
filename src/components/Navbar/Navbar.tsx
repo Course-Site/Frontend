@@ -4,6 +4,7 @@ import { Menu, X, EyeOff, Eye } from "lucide-react";
 import bannerLogo from "../../assets/images/bannerLogo.png";
 import Button from "../Button/Button";
 import AuthModal from "../AuthModal/AuthModal";
+import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -69,24 +70,24 @@ const Navbar = () => {
             {/* Меню для десктопа */}
             <ul className="hidden lg:flex gap-6 font-istok">
               <li>
-                <a href="#" className="text-white hover:text-amber-50 transition">
+                <NavLink to="/" className="text-white hover:text-amber-500 transition">
                   Главная
-                </a>
+                </NavLink>
               </li>
               <li>
-                <a href="#" className="text-white hover:text-amber-50 transition">
+                <NavLink to='/learning' className="text-white hover:text-amber-500 transition">
                   Обучение
-                </a>
+                </NavLink>
               </li>
               <li>
-                <a href="#" className="text-white hover:text-amber-50 transition">
+                <NavLink to="/profile" className="text-white hover:text-amber-500 transition">
                   Профиль
-                </a>
+                </NavLink>
               </li>
               <li>
-                <a href="#" className="text-white hover:text-amber-50 transition">
+                <NavLink to="/ai" className="text-white hover:text-amber-500 transition">
                   Нейросеть
-                </a>
+                </NavLink>
               </li>
             </ul>
 
