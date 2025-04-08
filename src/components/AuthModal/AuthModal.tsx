@@ -1,19 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../Button/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { signIn, signUp } from "../../store/authSlice";
 import { AppDispatch, RootState } from "../../store/store";
-
+import { useNavigate } from "react-router-dom";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  requestedPath?: string | null;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, requestedPath }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading } = useSelector((state: RootState) => state.auth);
+  const { loading, user } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
 
   const [isRegister, setIsRegister] = useState(false);
   const [name, setName] = useState("");
@@ -26,8 +28,36 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     } else {
       dispatch(signIn({ email, password }));
     }
-    onClose();
   };
+
+  // Следим за успешной авторизацией и редиректим
+  useEffect(() => {
+    if (user) {
+      onClose(); // Закрыть модалку
+      if (requestedPath) {
+        navigate(requestedPath, { replace: true });
+      }
+    }
+  }, [user, onClose, navigate, requestedPath]);
+
+  // Логика для закрытия модалки и перехода на главную страницу
+  const handleCloseAndGoHome = () => {
+    onClose(); // Закрыть модалку
+    navigate("/", { replace: true }); // Перейти на главную страницу
+  };
+
+  // Чтобы предотвратить появление скролла при открытой модалке
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"; // Отключить скролл
+    } else {
+      document.body.style.overflow = ""; // Включить скролл, если модалка закрыта
+    }
+
+    return () => {
+      document.body.style.overflow = ""; // Восстановить скролл, если компонент размонтирован
+    };
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
@@ -36,7 +66,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           className="fixed inset-0 flex items-center justify-center 
           bg-[linear-gradient(53.187deg,_#52576E_0%,_#AFAEAE_25%,_#CCC6BA_50%,_#AEAEAE_75%,_#606777_100%)] 
           backdrop-blur-3xl z-50 text-center font-istok"
-          onClick={(e) => e.target === e.currentTarget && onClose()}
+          onClick={(e) => e.target === e.currentTarget && handleCloseAndGoHome()}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -75,6 +105,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 className="border p-3 rounded-3xl"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               />
               <Button variant="secondary" onClick={handleSubmit} disabled={loading}>
                 {loading ? "Загрузка..." : isRegister ? "Зарегистрироваться" : "Войти"}
@@ -105,7 +136,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <button
-              onClick={onClose}
+              onClick={handleCloseAndGoHome}
               className="mt-4 text-amber-500 hover:text-red-800 w-20 cursor-pointer"
             >
               Закрыть

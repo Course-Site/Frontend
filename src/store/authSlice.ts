@@ -1,28 +1,28 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { jwtDecode } from "jwt-decode";
 
-// Определяем тип данных пользователя
+export type UserRole = "admin" | "user";
+
 interface User {
   id: string;
   name: string;
   email: string;
   token: string;
+  role: UserRole;
 }
 
-// Тип состояния авторизации
 interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
 }
 
-// Начальное состояние
 const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
 };
 
-// Типизация параметров запроса
 interface SignUpData {
   name: string;
   email: string;
@@ -34,7 +34,29 @@ interface SignInData {
   password: string;
 }
 
-// Асинхронные экшены для входа и регистрации
+interface JwtPayload {
+  id: string;
+  role: UserRole;
+}
+
+// Объединённая логика загрузки данных пользователя по токену
+const fetchUserByToken = async (token: string): Promise<User> => {
+  const decoded: JwtPayload = jwtDecode(token);
+  const response = await fetch(`http://localhost:4200/api/v1/user/findById/${decoded.id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const userData = await response.json();
+
+  return {
+    ...userData,
+    role: decoded.role,
+    token,
+  };
+};
+
+// Регистрация
 export const signUp = createAsyncThunk<User, SignUpData, { rejectValue: string }>(
   "auth/signUp",
   async (userData, { rejectWithValue }) => {
@@ -44,15 +66,20 @@ export const signUp = createAsyncThunk<User, SignUpData, { rejectValue: string }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
-      const data: User = await response.json();
-      if (!response.ok) throw new Error(data.token || "Ошибка регистрации"); 
-      return data;
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка регистрации");
+
+      const user = await fetchUserByToken(result.token);
+      localStorage.setItem("token", result.token);
+      return user;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
     }
   }
 );
 
+// Авторизация
 export const signIn = createAsyncThunk<User, SignInData, { rejectValue: string }>(
   "auth/signIn",
   async (userData, { rejectWithValue }) => {
@@ -62,21 +89,40 @@ export const signIn = createAsyncThunk<User, SignInData, { rejectValue: string }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userData),
       });
-      const data: User = await response.json();
-      if (!response.ok) throw new Error(data.token || "Ошибка входа");
-      return data;
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка входа");
+
+      const user = await fetchUserByToken(result.token);
+      localStorage.setItem("token", result.token);
+      return user;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
     }
   }
 );
 
-// Создаём Slice
+// Инициализация при старте
+export const initAuth = createAsyncThunk<User | null>("auth/init", async () => {
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+
+  try {
+    const user = await fetchUserByToken(token);
+    return user;
+  } catch {
+    localStorage.removeItem("token");
+    return null;
+  }
+});
+
+// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
     logout(state) {
+      localStorage.removeItem("token");
       state.user = null;
       state.error = null;
     },
@@ -91,7 +137,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
       })
-      .addCase(signUp.rejected, (state, action: PayloadAction<string | undefined>) => {
+      .addCase(signUp.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Ошибка регистрации";
       })
@@ -103,13 +149,17 @@ const authSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
       })
-      .addCase(signIn.rejected, (state, action: PayloadAction<string | undefined>) => {
+      .addCase(signIn.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Ошибка входа";
+      })
+      .addCase(initAuth.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.user = action.payload;
+        }
       });
   },
 });
 
-// Экспортируем экшены и редьюсер
 export const { logout } = authSlice.actions;
 export default authSlice.reducer;

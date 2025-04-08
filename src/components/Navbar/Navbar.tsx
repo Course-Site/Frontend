@@ -5,8 +5,13 @@ import bannerLogo from "../../assets/images/bannerLogo.png";
 import Button from "../Button/Button";
 import AuthModal from "../AuthModal/AuthModal";
 import { NavLink } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../store/authSlice"; // Импортируем action для выхода из аккаунта
+import { RootState } from "../../store/store";
 
 const Navbar = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.auth); // Получаем пользователя из Redux состояния
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bannerHidden, setBannerHidden] = useState(false);
@@ -25,19 +30,22 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  {/* Функция для скрытия или отображения баннера */}
   const toggleBanner = () => {
-    setBannerHidden(prev => {
+    setBannerHidden((prev) => {
       const newStatus = !prev;
-      localStorage.setItem("bannerHidden", newStatus.toString()); // Сохраняем состояние в localStorage
+      localStorage.setItem("bannerHidden", newStatus.toString());
       return newStatus;
     });
+  };
+
+  const handleLogout = () => {
+    dispatch(logout()); // Диспатчим action для выхода
   };
 
   return (
     <>
       <header className="fixed top-0 left-0 w-full z-50">
-        {/* Баннер (сначала уходит) */}
+        {/* Баннер (только для больших экранов) */}
         {!bannerHidden && (
           <motion.div
             initial={{ y: 0, opacity: 1 }}
@@ -59,14 +67,14 @@ const Navbar = () => {
           </motion.div>
         )}
 
-        {/* Навбар (поднимается после баннера) */}
+        {/* Навбар (всегда вверху на мобильных устройствах) */}
         <motion.nav
           initial={{ y: 0 }}
-          animate={{ top: bannerHidden || scrolled ? "0rem" : "9rem" }}
+          animate={{ top: bannerHidden || scrolled || window.innerWidth < 1024 ? "0rem" : "9rem" }}
           transition={{ duration: 0.1, ease: "easeInOut", delay: scrolled ? 0.2 : 0 }}
-          className="bg-neutral-950 shadow-md py-3 w-full fixed top-[9rem] left-0 transition-all"
+          className="bg-neutral-950 shadow-md py-3 w-full fixed top-0 left-0 transition-all"
         >
-          <div className="container mx-auto flex justify-between items-center px-20">
+          <div className="container mx-auto flex justify-between items-center px-6 lg:px-20">
             {/* Меню для десктопа */}
             <ul className="hidden lg:flex gap-6 font-istok">
               <li>
@@ -92,14 +100,19 @@ const Navbar = () => {
             </ul>
 
             {/* Кнопки слева */}
-            <div className="flex items-center gap-5 font-istok">
-              <Button variant="primary" className="px-3 py-2" onClick={() => setAuthModalOpen(true)} >
-                Войти / Зарегистрироваться
-              </Button>
+            <div className="hidden lg:flex items-center gap-5 font-istok">
+              {user ? (
+                <Button variant="primary" className="px-3 py-2" onClick={handleLogout}>
+                  Выйти
+                </Button>
+              ) : (
+                <Button variant="primary" className="px-3 py-2" onClick={() => setAuthModalOpen(true)}>
+                  Войти / Зарегистрироваться
+                </Button>
+              )}
               <a href="#" className="text-xl font-bold text-white">
                 Логотип
               </a>
-              {/* Кнопка для скрытия/показа баннера в навбаре */}
               <div className="group relative flex justify-center">
                 <Button variant="primary" onClick={toggleBanner} className="py-1 px-2">
                   {bannerHidden ? <Eye /> : <EyeOff />}
@@ -110,9 +123,8 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* НЕДОДЕЛАНО */}
             {/* Кнопка для мобильного меню */}
-            <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden text-white">
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -124,23 +136,28 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="lg:hidden bg-white shadow-md py-4"
+            className="lg:hidden bg-neutral-900 text-white py-4 absolute w-full top-14 left-0 shadow-md"
           >
             <ul className="flex flex-col items-center gap-4">
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition">
+                <NavLink to="/" className="hover:text-amber-500 transition">
                   Главная
-                </a>
+                </NavLink>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition">
-                  О нас
-                </a>
+                <NavLink to="/learning" className="hover:text-amber-500 transition">
+                  Обучение
+                </NavLink>
               </li>
               <li>
-                <a href="#" className="text-gray-600 hover:text-gray-900 transition">
-                  Контакты
-                </a>
+                <NavLink to="/profile" className="hover:text-amber-500 transition">
+                  Профиль
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/ai" className="hover:text-amber-500 transition">
+                  Нейросеть
+                </NavLink>
               </li>
             </ul>
           </motion.div>
