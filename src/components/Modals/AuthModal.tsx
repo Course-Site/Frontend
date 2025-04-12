@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Button from "../Button/Button";
 import { useDispatch, useSelector } from "react-redux";
-import { signIn, signUp } from "../../store/authSlice";
+import { signIn } from "../../store/authSlice";
 import { AppDispatch, RootState } from "../../store/store";
 import { useNavigate } from "react-router-dom";
 
@@ -17,45 +17,36 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, requestedPath })
   const { loading, user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
 
-  const [isRegister, setIsRegister] = useState(false);
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = () => {
-    if (isRegister) {
-      dispatch(signUp({ name, email, password }));
-    } else {
-      dispatch(signIn({ email, password }));
-    }
+    dispatch(signIn({ email, password }));
   };
 
-  // Следим за успешной авторизацией и редиректим
   useEffect(() => {
     if (user) {
-      onClose(); // Закрыть модалку
+      onClose();
       if (requestedPath) {
         navigate(requestedPath, { replace: true });
       }
     }
   }, [user, onClose, navigate, requestedPath]);
 
-  // Логика для закрытия модалки и перехода на главную страницу
   const handleCloseAndGoHome = () => {
-    onClose(); // Закрыть модалку
-    navigate("/", { replace: true }); // Перейти на главную страницу
+    onClose();
+    navigate("/", { replace: true });
   };
 
-  // Чтобы предотвратить появление скролла при открытой модалке
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"; // Отключить скролл
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ""; // Включить скролл, если модалка закрыта
+      document.body.style.overflow = "";
     }
 
     return () => {
-      document.body.style.overflow = ""; // Восстановить скролл, если компонент размонтирован
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -75,23 +66,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, requestedPath })
             transition={{ duration: 0.3 }}
             className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md"
           >
-            <h2 className="text-xl font-bold mb-4">
-              {isRegister ? "Регистрация" : "Вход"}
-            </h2>
-            <p className="text-gray-600 mb-4">
-              {isRegister ? "Создайте новый аккаунт!" : "Введите данные для входа!"}
-            </p>
+            <h2 className="text-xl font-bold mb-4">Авторизация</h2>
+            <p className="text-gray-600 mb-4">Введите данные для входа. Их вам должен предоставить преподаватель.</p>
 
             <div className="flex flex-col gap-3">
-              {isRegister && (
-                <input
-                  type="text"
-                  placeholder="Имя"
-                  className="border p-3 rounded-3xl"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              )}
               <input
                 type="email"
                 placeholder="Email"
@@ -108,31 +86,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, requestedPath })
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               />
               <Button variant="secondary" onClick={handleSubmit} disabled={loading}>
-                {loading ? "Загрузка..." : isRegister ? "Зарегистрироваться" : "Войти"}
+                {loading ? "Загрузка..." : "Войти"}
               </Button>
-              <div className="text-center">
-                {isRegister ? (
-                  <span>
-                    Уже есть аккаунт?
-                    <button
-                      className="text-amber-500 hover:underline hover:text-red-800 ml-1 cursor-pointer"
-                      onClick={() => setIsRegister(false)}
-                    >
-                      Войти
-                    </button>
-                  </span>
-                ) : (
-                  <span>
-                    Нет профиля?
-                    <button
-                      className="text-amber-500 hover:underline hover:text-red-800 ml-1 cursor-pointer"
-                      onClick={() => setIsRegister(true)}
-                    >
-                      Зарегистрируйтесь!
-                    </button>
-                  </span>
-                )}
-              </div>
             </div>
 
             <button

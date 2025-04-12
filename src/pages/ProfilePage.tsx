@@ -4,7 +4,7 @@ import { RootState } from "../store/store";
 import UserInfo from "../components/UserInfo/UserInfo";
 import AdminPanel from "./AdminPanel";
 import UserStats from "./UserStats";
-import AuthModal from "../components/AuthModal/AuthModal";
+import AuthModal from "../components/Modals/AuthModal";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage: React.FC = () => {

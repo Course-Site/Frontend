@@ -61,18 +61,22 @@ export const signUp = createAsyncThunk<User, SignUpData, { rejectValue: string }
   "auth/signUp",
   async (userData, { rejectWithValue }) => {
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch("http://localhost:4200/api/v1/auth/sign-up", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // <-- добавили токен
+        },
         body: JSON.stringify(userData),
       });
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Ошибка регистрации");
 
-      const user = await fetchUserByToken(result.token);
-      localStorage.setItem("token", result.token);
-      return user;
+      // const user = await fetchUserByToken(result.token);
+      // localStorage.setItem("token", result.token);
+      return result;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
     }

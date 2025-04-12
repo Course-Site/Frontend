@@ -4,7 +4,7 @@ import MainPage from "./pages/MainPage";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProfilePage from "./pages/ProfilePage";
 import PrivateRoute from "./routes/PrivateRoute";
-import AuthModal from "./components/AuthModal/AuthModal";
+import AuthModal from "./components/Modals/AuthModal";
 import { useState } from "react";
 
 function App() {

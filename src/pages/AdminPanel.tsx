@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import Button from "../components/Button/Button";
+import AddUserForm from "../components/Modals/AddUserForm"; // путь может отличаться
 
 interface User {
   id: string;
@@ -8,6 +10,7 @@ interface User {
 
 const AdminPanel: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
   const fetchUsers = async () => {
     const res = await fetch("http://localhost:4200/api/v1/user/getAll", {
@@ -33,9 +36,22 @@ const AdminPanel: React.FC = () => {
     fetchUsers();
   }, []);
 
+  const handleUserAdded = () => {
+    setIsFormVisible(false);
+    fetchUsers();
+  };
+
   return (
     <div className="p-4">
       <h3 className="text-lg font-semibold mb-4">Список пользователей</h3>
+      <Button variant="primary" onClick={() => setIsFormVisible(true)}>
+        Добавить пользователя
+      </Button>
+
+      {isFormVisible && (
+        <AddUserForm onSuccess={handleUserAdded} onCancel={() => setIsFormVisible(false)} />
+      )}
+
       {users.map((user) => (
         <div key={user.id} className="flex justify-between items-center border-b py-2">
           <div>

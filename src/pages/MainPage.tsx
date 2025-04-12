@@ -106,11 +106,11 @@ const MainPage = () => {
         </Link>
         </div>
       </section>
-      <section className="px-[60px] py-12 h-screen text-white bg-black flex items-center justify-items-center">
+      <section className="px-[60px] py-1 max-h-screen text-white bg-black flex items-center justify-items-center">
         <div>
           <h1 className="font-istok text-3xl text-center"> Задачи, которые ты сможешь решать после курса: </h1>
         </div>
-        <div>
+        <div className="max-h-[700px] scroll-auto">
           <GoalSlider />
         </div>
       </section>

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Menu, X, EyeOff, Eye } from "lucide-react";
 import bannerLogo from "../../assets/images/bannerLogo.png";
 import Button from "../Button/Button";
-import AuthModal from "../AuthModal/AuthModal";
+import AuthModal from "../Modals/AuthModal";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/authSlice"; // Импортируем action для выхода из аккаунта
@@ -107,7 +107,7 @@ const Navbar = () => {
                 </Button>
               ) : (
                 <Button variant="primary" className="px-3 py-2" onClick={() => setAuthModalOpen(true)}>
-                  Войти / Зарегистрироваться
+                  Войти
                 </Button>
               )}
               <a href="#" className="text-xl font-bold text-white">
