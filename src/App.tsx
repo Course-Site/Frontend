@@ -6,6 +6,8 @@ import ProfilePage from "./pages/ProfilePage";
 import PrivateRoute from "./routes/PrivateRoute";
 import AuthModal from "./components/Modals/AuthModal";
 import { useState } from "react";
+import LecturePage from "./pages/LecturePage";  // Страница для просмотра лекции
+import LectureEditor from "./pages/LectureEditor";  // Страница для создания и редактирования лекции
 
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -26,6 +28,8 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<MainPage />} />
+
+          {/* Страница обучения */}
           <Route
             path="/learning"
             element={
@@ -34,6 +38,8 @@ function App() {
               </PrivateRoute>
             }
           />
+
+          {/* Страница профиля */}
           <Route
             path="/profile"
             element={
@@ -42,9 +48,39 @@ function App() {
               </PrivateRoute>
             }
           />
+
+          {/* Страница для создания новой лекции */}
+          <Route
+            path="/lecture/create"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/lecture/create")}>
+                <LectureEditor isEdit={false} />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Страница для редактирования лекции по ID */}
+          <Route
+            path="/lecture/edit/:id"
+            element={
+              <PrivateRoute onOpenModal={(path) => openAuthModal(path)}>
+                <LectureEditor isEdit={true} />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Страница для просмотра лекции (не редактирование) */}
+          <Route
+            path="/lecture/:id"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/lecture/:id")}>
+                <LecturePage />
+              </PrivateRoute>
+            }
+          />
         </Routes>
 
-        {/* модалка авторизации */}
+        {/* Модальное окно авторизации */}
         <AuthModal
           isOpen={authModalOpen}
           onClose={closeAuthModal}
