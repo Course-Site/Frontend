@@ -1,5 +1,4 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { RootState } from "./store";
 
 interface Topic {
   id: string;
@@ -7,17 +6,18 @@ interface Topic {
   description: string;
 }
 
-interface Lecture {
+export interface Lecture {
   id: string;
   title: string;
   topicId: string;
-  lectureFileUrl: string;
+  content: string;
 }
 
-interface Lab {
+export interface Lab {
   id: string;
   title: string;
   topicId: string;
+  content: string; // Добавляем content для лабораторных работ
 }
 
 interface Test {
@@ -25,11 +25,25 @@ interface Test {
   title: string;
   topicId: string;
 }
+interface LabResult {
+  id: string;
+  submissionFileUrl?: string;
+  score?: number;
+  submittedAt: Date;
+  userId: string;
+  labId: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
 
 interface LearningState {
   topics: Topic[];
   lectures: Lecture[];
   labs: Lab[];
+  labResults: LabResult[];
   tests: Test[];
   loading: boolean;
   error: string | null;
@@ -39,11 +53,14 @@ const initialState: LearningState = {
   topics: [],
   lectures: [],
   labs: [],
+  labResults: [],
   tests: [],
   loading: false,
   error: null,
 };
 
+
+// Топики
 export const fetchTopics = createAsyncThunk<Topic[], void, { rejectValue: string }>(
   "learning/fetchTopics",
   async (_, { rejectWithValue }) => {
@@ -57,75 +74,6 @@ export const fetchTopics = createAsyncThunk<Topic[], void, { rejectValue: string
 
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Ошибка загрузки тем");
-
-      return result;
-    } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Неизвестная ошибка"
-      );
-    }
-  }
-);
-
-export const fetchLectures = createAsyncThunk<Lecture[], void, { rejectValue: string }>(
-  "learning/fetchLectures",
-  async (_, { rejectWithValue }) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4200/api/v1/lecture/getAll", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Ошибка загрузки лекций");
-
-      return result;
-    } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Неизвестная ошибка"
-      );
-    }
-  }
-);
-
-export const fetchLabs = createAsyncThunk<Lab[], void, { rejectValue: string }>(
-  "learning/fetchLabs",
-  async (_, { rejectWithValue }) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4200/api/v1/lab/getAll", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Ошибка загрузки лабораторных");
-
-      return result;
-    } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Неизвестная ошибка"
-      );
-    }
-  }
-);
-
-export const fetchTests = createAsyncThunk<Test[], void, { rejectValue: string }>(
-  "learning/fetchTests",
-  async (_, { rejectWithValue }) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4200/api/v1/test/getAll", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message || "Ошибка загрузки тестов");
 
       return result;
     } catch (error) {
@@ -162,38 +110,342 @@ export const createTopic = createAsyncThunk<Topic, { title: string; description?
   }
 );
 
-export const saveLecture = createAsyncThunk<
-  void,
-  { title: string; lectureFileUrl: string; topicId: string; id?: string }, // Добавили topicId
-  { state: RootState }
->("learning/saveLecture", async ({ title, lectureFileUrl, topicId, id }, { rejectWithValue }) => {
-  try {
-    const token = localStorage.getItem("token");
-    const isEdit = Boolean(id);
+// Лекции
+export const fetchLectures = createAsyncThunk<Lecture[], void, { rejectValue: string }>(
+  "learning/fetchLectures",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4200/api/v1/lecture/getAll", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const response = await fetch(
-      isEdit ? `http://localhost:4200/api/v1/lecture/${id}` : "http://localhost:4200/api/v1/lecture/create",
-      {
-        method: isEdit ? "PUT" : "POST",
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка загрузки лекций");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const createLecture = createAsyncThunk<
+  Lecture,
+  { title: string; content: string; topicId: string },
+  { rejectValue: string }
+>(
+  "learning/createLecture",
+  async ({ title, content, topicId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4200/api/v1/lecture/create", {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ title, lectureFileUrl, topicId }), // Добавили topicId
-      }
-    );
+        body: JSON.stringify({ title, content, topicId }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      return rejectWithValue(error.message || "Ошибка при сохранении лекции");
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка при создании лекции");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
     }
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      return rejectWithValue(err.message);
-    }
-    return rejectWithValue("Неизвестная ошибка");
   }
-});
+);
+
+export const updateLecture = createAsyncThunk<
+  Lecture,
+  { id: string; title: string; content: string; topicId: string },
+  { rejectValue: string }
+>(
+  "learning/updateLecture",
+  async ({ id, title, content, topicId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/lecture/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, topicId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка при обновлении лекции");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const deleteLecture = createAsyncThunk<string, string, { rejectValue: string }>(
+  "learning/deleteLecture",
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/lecture/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Ошибка при удалении лекции");
+      }
+
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+// Лабораторные работы
+export const fetchLabs = createAsyncThunk<Lab[], void, { rejectValue: string }>(
+  "learning/fetchLabs",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4200/api/v1/lab/getAll", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка загрузки лабораторных работ");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const createLab = createAsyncThunk<
+  Lab,
+  { title: string; content: string; topicId: string },
+  { rejectValue: string }
+>(
+  "learning/createLab",
+  async ({ title, content, topicId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4200/api/v1/lab/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, topicId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка при создании лабораторной работы");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const updateLab = createAsyncThunk<
+  Lab,
+  { id: string; title: string; content: string; topicId: string },
+  { rejectValue: string }
+>(
+  "learning/updateLab",
+  async ({ id, title, content, topicId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/lab/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, content, topicId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка при обновлении лабораторной работы");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const deleteLab = createAsyncThunk<string, string, { rejectValue: string }>(
+  "learning/deleteLab",
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/lab/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Ошибка при удалении лабораторной работы");
+      }
+
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+// Резы лаб
+export const uploadLabFile = createAsyncThunk<
+  LabResult,
+  FormData,
+  { rejectValue: string }
+>(
+  'learning/uploadLabFile',
+  async (formData, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:4200/api/v1/labresult/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка загрузки файла');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Неизвестная ошибка'
+      );
+    }
+  }
+);
+
+export const fetchLabResults = createAsyncThunk<
+  LabResult[],
+  string,
+  { rejectValue: string }
+>(
+  'learning/fetchLabResults',
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:4200/api/v1/labresult/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка загрузки результатов');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Неизвестная ошибка'
+      );
+    }
+  }
+);
+
+export const gradeLab = createAsyncThunk<
+  LabResult,
+  { resultId: string; score: number; labId: string },
+  { rejectValue: string }
+>(
+  'learning/gradeLab',
+  async ({ resultId, score }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:4200/api/v1/labresult/${resultId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ score }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ошибка оценки работы');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : 'Неизвестная ошибка'
+      );
+    }
+  }
+);
+
+// Тесты
+export const fetchTests = createAsyncThunk<Test[], void, { rejectValue: string }>(
+  "learning/fetchTests",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4200/api/v1/test/getAll", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка загрузки тестов");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
 
 const learningSlice = createSlice({
   name: "learning",
@@ -201,6 +453,7 @@ const learningSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Топики
       .addCase(fetchTopics.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -211,16 +464,7 @@ const learningSlice = createSlice({
       })
       .addCase(fetchTopics.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Ошибка";
-      })
-      .addCase(fetchLectures.fulfilled, (state, action) => {
-        state.lectures = action.payload;
-      })
-      .addCase(fetchLabs.fulfilled, (state, action) => {
-        state.labs = action.payload;
-      })
-      .addCase(fetchTests.fulfilled, (state, action) => {
-        state.tests = action.payload;
+        state.error = action.payload || "Ошибка загрузки тем";
       })
       .addCase(createTopic.pending, (state) => {
         state.loading = true;
@@ -234,16 +478,76 @@ const learningSlice = createSlice({
         state.loading = false;
         state.error = action.payload || "Ошибка при создании темы";
       })
-      .addCase(saveLecture.pending, (state) => {
+
+      // Лекции
+      .addCase(fetchLectures.fulfilled, (state, action) => {
+        state.lectures = action.payload;
+      })
+      .addCase(createLecture.fulfilled, (state, action) => {
+        state.lectures.push(action.payload);
+      })
+      .addCase(updateLecture.fulfilled, (state, action) => {
+        const idx = state.lectures.findIndex((l) => l.id === action.payload.id);
+        if (idx !== -1) {
+          state.lectures[idx] = action.payload;
+        }
+      })
+      .addCase(deleteLecture.fulfilled, (state, action) => {
+        state.lectures = state.lectures.filter((lecture) => lecture.id !== action.payload);
+      })
+
+      // Лабораторные работы
+      .addCase(fetchLabs.fulfilled, (state, action) => {
+        state.labs = action.payload;
+      })
+      .addCase(createLab.fulfilled, (state, action) => {
+        state.labs.push(action.payload);
+      })
+      .addCase(updateLab.fulfilled, (state, action) => {
+        const idx = state.labs.findIndex((l) => l.id === action.payload.id);
+        if (idx !== -1) {
+          state.labs[idx] = action.payload;
+        }
+      })
+      .addCase(deleteLab.fulfilled, (state, action) => {
+        state.labs = state.labs.filter((lab) => lab.id !== action.payload);
+      })
+
+      // резы лабы
+      .addCase(uploadLabFile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(saveLecture.fulfilled, (state) => {
+      .addCase(uploadLabFile.fulfilled, (state, action) => {
         state.loading = false;
+        state.labResults.push(action.payload);
       })
-      .addCase(saveLecture.rejected, (state, action) => {
+      .addCase(uploadLabFile.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
+        state.error = action.payload || 'Ошибка загрузки файла';
+      })
+      .addCase(fetchLabResults.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchLabResults.fulfilled, (state, action) => {
+        state.loading = false;
+        state.labResults = action.payload;
+      })
+      .addCase(fetchLabResults.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Ошибка загрузки результатов';
+      })
+      .addCase(gradeLab.fulfilled, (state, action) => {
+        const index = state.labResults.findIndex(r => r.id === action.payload.id);
+        if (index !== -1) {
+          state.labResults[index] = action.payload;
+        }
+      })
+
+      // Тесты
+      .addCase(fetchTests.fulfilled, (state, action) => {
+        state.tests = action.payload;
       });
   },
 });

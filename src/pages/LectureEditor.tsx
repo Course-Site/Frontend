@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom'; // Добавили useLocation
 import { Editor } from '@tinymce/tinymce-react';
 import { useAppDispatch } from '../store/hooks';
-import { saveLecture } from '../store/learningSlice';
+import { createLecture, updateLecture } from '../store/learningSlice';
 
 interface LectureEditorProps {
   isEdit: boolean;
@@ -16,7 +16,7 @@ const LectureEditor: React.FC<LectureEditorProps> = ({
   initialTitle = ''
 }) => {
   const dispatch = useAppDispatch();
-  const [lectureFileUrl, setLectureFileUrl] = useState(initialContent);
+  const [content, setContent] = useState(initialContent);
   const [title, setTitle] = useState(initialTitle);
   const [topicId, setTopicId] = useState(''); // Добавили состояние для topicId
 
@@ -42,7 +42,7 @@ const LectureEditor: React.FC<LectureEditorProps> = ({
 
         const data = await response.json();
         setTitle(data.title);
-        setLectureFileUrl(data.lectureFileUrl);
+        setContent(data.content);
         // Если редактируем существующую лекцию, получаем topicId из данных
         if (data.topicId) {
           setTopicId(data.topicId);
@@ -54,31 +54,42 @@ const LectureEditor: React.FC<LectureEditorProps> = ({
   }, [isEdit, id, location.search]);
 
   const handleEditorChange = (newContent: string) => {
-    setLectureFileUrl(newContent);
+    setContent(newContent);
   };
 
-  const handleSave = async () => {
-    if (!topicId) {
-      alert('Не указана тема для лекции');
-      return;
-    }
+  // В файле LectureEditor.tsx
 
-    try {
-      await dispatch(saveLecture({ 
-        title, 
-        lectureFileUrl, 
-        topicId, // Добавили topicId
-        id 
-      })).unwrap();
-      alert(isEdit ? 'Лекция обновлена' : 'Лекция сохранена');
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        alert("Ошибка: " + err.message);
-      } else {
-        alert("Неизвестная ошибка");
+const handleSave = async () => {
+  if (!topicId) {
+    alert('Не указана тема для лекции');
+    return;
+  }
+
+  try {
+    if (isEdit && id) {
+      // Проверяем, что id является валидным UUID перед отправкой
+      if (!isValidUUID(id)) {
+        throw new Error('Неверный формат ID лекции');
       }
+      await dispatch(updateLecture({ id, title, content, topicId })).unwrap();
+    } else {
+      await dispatch(createLecture({ title, content, topicId })).unwrap();
     }
-  };
+    alert(isEdit ? 'Лекция обновлена' : 'Лекция сохранена');
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      alert("Ошибка: " + err.message);
+    } else {
+      alert("Неизвестная ошибка");
+    }
+  }
+};
+
+// Вспомогательная функция для проверки UUID
+function isValidUUID(uuid: string): boolean {
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return regex.test(uuid);
+}
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -103,7 +114,7 @@ const LectureEditor: React.FC<LectureEditorProps> = ({
 
       <Editor
         apiKey="fd4zawezgmeqthwbbgtlvwiievumnw9lob7vw6ljv0napxrl"
-        value={lectureFileUrl}
+        value={content}
         onEditorChange={handleEditorChange}
         init={{
           height: 500,

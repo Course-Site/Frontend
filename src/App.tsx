@@ -6,8 +6,10 @@ import ProfilePage from "./pages/ProfilePage";
 import PrivateRoute from "./routes/PrivateRoute";
 import AuthModal from "./components/Modals/AuthModal";
 import { useState } from "react";
-import LecturePage from "./pages/LecturePage";  // Страница для просмотра лекции
-import LectureEditor from "./pages/LectureEditor";  // Страница для создания и редактирования лекции
+import LecturePage from "./pages/LecturePage";
+import LectureEditor from "./pages/LectureEditor";
+import LabPage from "./pages/LabPage"; // Импорт страницы просмотра лабораторной работы
+import LabEditor from "./pages/LabEditor"; // Импорт редактора лабораторных работ
 
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -49,7 +51,7 @@ function App() {
             }
           />
 
-          {/* Страница для создания новой лекции */}
+          {/* Маршруты для лекций */}
           <Route
             path="/lecture/create"
             element={
@@ -58,8 +60,6 @@ function App() {
               </PrivateRoute>
             }
           />
-
-          {/* Страница для редактирования лекции по ID */}
           <Route
             path="/lecture/edit/:id"
             element={
@@ -68,13 +68,37 @@ function App() {
               </PrivateRoute>
             }
           />
-
-          {/* Страница для просмотра лекции (не редактирование) */}
           <Route
             path="/lecture/:id"
             element={
               <PrivateRoute onOpenModal={() => openAuthModal("/lecture/:id")}>
                 <LecturePage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Маршруты для лабораторных работ */}
+          <Route
+            path="/lab/create"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/lab/create")}>
+                <LabEditor isEdit={false} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/lab/edit/:id"
+            element={
+              <PrivateRoute onOpenModal={(path) => openAuthModal(path)}>
+                <LabEditor isEdit={true} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/lab/:id"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/lab/:id")}>
+                <LabPage />
               </PrivateRoute>
             }
           />

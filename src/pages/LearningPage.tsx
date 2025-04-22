@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTopics, fetchLectures, fetchLabs, fetchTests, createTopic } from "../store/learningSlice";
 import { RootState, AppDispatch } from "../store/store";
+import type { Lecture, Lab } from "../store/learningSlice";
 import { Link } from "react-router-dom";
 import Button from "../components/Button/Button";
 
@@ -19,14 +20,6 @@ const LearningPage: React.FC = () => {
     dispatch(fetchTests());
   }, [dispatch]);
 
-  // useEffect(() => {
-  //   console.log("Темы:", topics);
-  //   console.log("Лекции:", lectures);
-  //   console.log("Лабораторные:", labs);
-  //   console.log("Тесты:", tests);
-  // }, [topics, lectures, labs, tests]);
-
-
   const handleCreateTopic = () => {
     if (newTopicTitle.trim() === "") return;
 
@@ -40,14 +33,17 @@ const LearningPage: React.FC = () => {
       });
   };
 
-  const getLectureByTopic = (topicId: string) => {
-    const lecture = lectures.find((l) => l.topicId === topicId);
-    //console.log(`Поиск лекции для темы ${topicId}:`, lecture);
-    console.log('Лекция: ', lecture);
-    return lecture;
+  const getLectureByTopic = (topicId: string): Lecture | undefined => {
+    return lectures.find((l) => l.topicId === topicId);
   };
-  const getLabByTopic = (topicId: string) => labs.find((l) => l.topicId === topicId);
+
+  const getLabByTopic = (topicId: string): Lab | undefined => {
+    return labs.find((l) => l.topicId === topicId);
+  };
+
   const getTestByTopic = (topicId: string) => tests.find((t) => t.topicId === topicId);
+
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="max-w-4xl mx-auto mt-10">
@@ -68,32 +64,69 @@ const LearningPage: React.FC = () => {
               <p className="text-gray-600">{topic.description}</p>
 
               <div className="mt-4 space-y-2">
+                {/* Лекция */}
                 <div className="flex justify-between items-center">
-                  {lecture ? (
-                    <Link to={`/lecture/${lecture.id}`} className="text-blue-600 hover:underline">
-                      Лекция
-                    </Link>
-                  ) : (
-                    <>
-                      <span className="text-gray-500">Лекция</span>
-                      <Link to={`/lecture/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
-                    </>
+                  <div>
+                    {lecture ? (
+                      <Link to={`/lecture/${lecture.id}`} className="text-blue-600 hover:underline">
+                        Лекция: {lecture.title}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-500">Лекция не добавлена</span>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex space-x-2">
+                      {lecture ? (
+                        <Link to={`/lecture/edit/${lecture.id}`} className="btn-admin">Изменить</Link>
+                      ) : (
+                        <Link to={`/lecture/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                {/* Лабораторная работа */}
                 <div className="flex justify-between items-center">
-                  <span>Лабораторная</span>
-                  {lab ? (
-                    <Link to={`/admin/edit-lab/${lab.id}`} className="btn-admin">Редактировать</Link>
-                  ) : (
-                    <Link to={`/admin/create-lab?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
+                  <div>
+                    {lab ? (
+                      <Link to={`/lab/${lab.id}`} className="text-blue-600 hover:underline">
+                        Лабораторная: {lab.title}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-500">Лабораторная не добавлена</span>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex space-x-2">
+                      {lab ? (
+                        <Link to={`/lab/edit/${lab.id}`} className="btn-admin">Редактировать</Link>
+                      ) : (
+                        <Link to={`/lab/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                {/* Тест */}
                 <div className="flex justify-between items-center">
-                  <span>Тест</span>
-                  {test ? (
-                    <Link to={`/admin/edit-test/${test.id}`} className="btn-admin">Редактировать</Link>
-                  ) : (
-                    <Link to={`/admin/create-test?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
+                  <div>
+                    {test ? (
+                      <Link to={`/test/${test.id}`} className="text-blue-600 hover:underline">
+                        Тест: {test.title}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-500">Тест не добавлен</span>
+                    )}
+                  </div>
+                  {isAdmin && (
+                    <div className="flex space-x-2">
+                      {test ? (
+                        <Link to={`/admin/edit-test/${test.id}`} className="btn-admin">Редактировать</Link>
+                      ) : (
+                        <Link to={`/admin/create-test?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -101,10 +134,9 @@ const LearningPage: React.FC = () => {
           );
         })}
 
-        {user?.role === "admin" && (
+        {isAdmin && (
           <li className="border border-black p-4 rounded shadow bg-gray-50">
             <h2 className="text-xl font-semibold mb-2">Создать новую тему</h2>
-
             <input
               type="text"
               value={newTopicTitle}
@@ -112,9 +144,9 @@ const LearningPage: React.FC = () => {
               placeholder="Название темы"
               className="w-full p-2 border rounded mb-4"
             />
-
             <Button
               variant="primary"
+              className="px-3 py-2"
               onClick={handleCreateTopic}
             >
               Сохранить тему
