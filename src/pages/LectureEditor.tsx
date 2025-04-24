@@ -1,99 +1,75 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'react-router-dom'; // Добавили useLocation
+import { useParams, useLocation } from 'react-router-dom';
 import { Editor } from '@tinymce/tinymce-react';
-import { useAppDispatch } from '../store/hooks';
-import { createLecture, updateLecture } from '../store/learningSlice';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { createLecture, updateLecture, fetchLectureById } from '../store/lectureSlice';
+import type {LectureEditorProps} from "../types/types";
 
-interface LectureEditorProps {
-  isEdit: boolean;
-  initialContent?: string;
-  initialTitle?: string;
-}
 
-const LectureEditor: React.FC<LectureEditorProps> = ({
-  isEdit,
-  initialContent = '',
-  initialTitle = ''
-}) => {
+const LectureEditor: React.FC<LectureEditorProps> = ({ isEdit }) => {
   const dispatch = useAppDispatch();
-  const [content, setContent] = useState(initialContent);
-  const [title, setTitle] = useState(initialTitle);
-  const [topicId, setTopicId] = useState(''); // Добавили состояние для topicId
-
   const { id } = useParams<{ id: string }>();
-  const location = useLocation(); // Для получения query параметров
+  const location = useLocation();
+
+  const { lectures, loading, error } = useAppSelector((state) => state.lecture);
+  const lecture = isEdit && id ? lectures.find((l) => l.id === id) : null;
+
+  const [content, setContent] = useState('');
+  const [title, setTitle] = useState('');
+  const [topicId, setTopicId] = useState('');
 
   useEffect(() => {
-    // Получаем topicId из query параметров
     const queryParams = new URLSearchParams(location.search);
     const topicIdFromUrl = queryParams.get('topicId');
-    if (topicIdFromUrl) {
-      setTopicId(topicIdFromUrl);
-    }
+    if (topicIdFromUrl) setTopicId(topicIdFromUrl);
 
     if (isEdit && id) {
-      const fetchLectureData = async () => {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`http://localhost:4200/api/v1/lecture/findById/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        setTitle(data.title);
-        setContent(data.content);
-        // Если редактируем существующую лекцию, получаем topicId из данных
-        if (data.topicId) {
-          setTopicId(data.topicId);
-        }
-      };
-
-      fetchLectureData();
+      dispatch(fetchLectureById(id));
     }
-  }, [isEdit, id, location.search]);
+  }, [dispatch, id, isEdit, location.search]);
 
-  const handleEditorChange = (newContent: string) => {
-    setContent(newContent);
-  };
+  useEffect(() => {
+    if (lecture) {
+      setTitle(lecture.title);
+      setContent(lecture.content);
+      if (lecture.topicId) setTopicId(lecture.topicId);
+    }
+  }, [lecture]);
 
-  // В файле LectureEditor.tsx
+  const handleEditorChange = (newContent: string) => setContent(newContent);
 
-const handleSave = async () => {
-  if (!topicId) {
-    alert('Не указана тема для лекции');
-    return;
-  }
-
-  try {
-    if (isEdit && id) {
-      // Проверяем, что id является валидным UUID перед отправкой
-      if (!isValidUUID(id)) {
-        throw new Error('Неверный формат ID лекции');
+  const handleSave = async () => {
+    if (!topicId) return alert('Не указана тема для лекции');
+    try {
+      if (isEdit && id) {
+        await dispatch(updateLecture({ id, title, content, topicId })).unwrap();
+        alert('Лекция обновлена');
+      } else {
+        await dispatch(createLecture({ title, content, topicId })).unwrap();
+        alert('Лекция сохранена');
       }
-      await dispatch(updateLecture({ id, title, content, topicId })).unwrap();
-    } else {
-      await dispatch(createLecture({ title, content, topicId })).unwrap();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? `Ошибка: ${err.message}` : 'Неизвестная ошибка');
     }
-    alert(isEdit ? 'Лекция обновлена' : 'Лекция сохранена');
-  } catch (err: unknown) {
-    if (err instanceof Error) {
-      alert("Ошибка: " + err.message);
-    } else {
-      alert("Неизвестная ошибка");
-    }
-  }
-};
-
-// Вспомогательная функция для проверки UUID
-function isValidUUID(uuid: string): boolean {
-  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return regex.test(uuid);
-}
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{isEdit ? 'Редактировать лекцию' : 'Создать лекцию'}</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        {isEdit ? 'Редактировать лекцию' : 'Создать лекцию'}
+      </h1>
+
+      {loading && (
+        <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 rounded">
+          Загрузка данных лекции...
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">
+          Ошибка: {error}
+        </div>
+      )}
 
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">Тема лекции:</label>
@@ -120,8 +96,7 @@ function isValidUUID(uuid: string): boolean {
           height: 500,
           menubar: false,
           plugins: ['link', 'image', 'media'],
-          toolbar:
-            'undo redo | styles | bold italic | alignleft aligncenter alignright | outdent indent | link image',
+          toolbar: 'undo redo | styles | bold italic | alignleft aligncenter alignright | outdent indent | link image',
         }}
       />
 

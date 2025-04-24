@@ -1,79 +1,19 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-
-interface Lecture {
-  title: string;
-  content: string;
-}
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchLectureById } from "../store/lectureSlice";
+import { RootState, AppDispatch } from "../store/store";
 
 const LecturePage = () => {
   const { id } = useParams<{ id: string }>();
-  const [lecture, setLecture] = useState<Lecture | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { lectures, loading, error } = useSelector((state: RootState) => state.lecture);
+  const lecture = lectures.find((l) => l.id === id);
 
   useEffect(() => {
-    const fetchLecture = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        if (!id) {
-          throw new Error("ID лекции не указан");
-        }
-
-        // Проверка формата ID
-        const isValidUUID = (id: string) => 
-          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
-        
-        if (!isValidUUID(id)) {
-          throw new Error("Неверный формат ID лекции");
-        }
-
-        const token = localStorage.getItem("token");
-        console.log("Используемый токен:", token); // Логируем токен
-        
-        if (!token) {
-          throw new Error("Требуется авторизация");
-        }
-
-        const response = await fetch(`http://localhost:4200/api/v1/lecture/findById/${id}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        console.log("Статус ответа:", response.status); // Логируем статус
-
-        if (!response.ok) {
-          // Пытаемся получить детали ошибки от сервера
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message || 
-            `Ошибка сервера: ${response.status} ${response.statusText}`
-          );
-        }
-
-        const data = await response.json();
-        console.log("Полученные данные:", data); // Логируем ответ
-        
-        if (!data.title || !data.content) {
-          throw new Error("Неполные данные лекции");
-        }
-
-        setLecture(data);
-      } catch (error) {
-        console.error("Полная ошибка:", error);
-        setError(error instanceof Error ? error.message : "Неизвестная ошибка");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLecture();
-  }, [id]);
+    if (id) dispatch(fetchLectureById(id));
+  }, [id, dispatch]);
 
   if (loading) return <p className="text-center">Загрузка лекции...</p>;
   if (error) return <p className="text-center text-red-500">Ошибка: {error}</p>;
@@ -82,10 +22,7 @@ const LecturePage = () => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">{lecture.title}</h1>
-      <div
-        className="prose"
-        dangerouslySetInnerHTML={{ __html: lecture.content }}
-      />
+      <div className="prose" dangerouslySetInnerHTML={{ __html: lecture.content }} />
     </div>
   );
 };

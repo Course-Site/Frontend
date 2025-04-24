@@ -8,8 +8,10 @@ import AuthModal from "./components/Modals/AuthModal";
 import { useState } from "react";
 import LecturePage from "./pages/LecturePage";
 import LectureEditor from "./pages/LectureEditor";
-import LabPage from "./pages/LabPage"; // Импорт страницы просмотра лабораторной работы
-import LabEditor from "./pages/LabEditor"; // Импорт редактора лабораторных работ
+import LabPage from "./pages/LabPage";
+import LabEditor from "./pages/LabEditor";
+import TestEditor from "./pages/TestEditor";
+import TestPage from "./pages/TestPage";
 
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -99,6 +101,32 @@ function App() {
             element={
               <PrivateRoute onOpenModal={() => openAuthModal("/lab/:id")}>
                 <LabPage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Маршруты для тестов */}
+          <Route
+            path="/test/create"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/test/create")}>
+                <TestEditor isEdit={false} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/test/edit/:id"
+            element={
+              <PrivateRoute onOpenModal={(path) => openAuthModal(path)}>
+                <TestEditor isEdit={true} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/test/:id"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/test/:id")}>
+                <TestPage />
               </PrivateRoute>
             }
           />

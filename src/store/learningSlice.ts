@@ -447,6 +447,93 @@ export const fetchTests = createAsyncThunk<Test[], void, { rejectValue: string }
   }
 );
 
+export const createTest = createAsyncThunk<
+  Test,
+  { title: string; topicId: string },
+  { rejectValue: string }
+>(
+  "learning/createTest",
+  async ({ title, topicId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("http://localhost:4200/api/v1/test/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, topicId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка при создании теста");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const updateTest = createAsyncThunk<
+  Test,
+  { id: string; title: string; topicId: string },
+  { rejectValue: string }
+>(
+  "learning/updateTest",
+  async ({ id, title, topicId }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/test/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, topicId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка при обновлении теста");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+export const deleteTest = createAsyncThunk<string, string, { rejectValue: string }>(
+  "learning/deleteTest",
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/test/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Ошибка при удалении теста");
+      }
+
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
+
 const learningSlice = createSlice({
   name: "learning",
   initialState,
@@ -548,6 +635,18 @@ const learningSlice = createSlice({
       // Тесты
       .addCase(fetchTests.fulfilled, (state, action) => {
         state.tests = action.payload;
+      })
+      .addCase(createTest.fulfilled, (state, action) => {
+        state.tests.push(action.payload);
+      })
+      .addCase(updateTest.fulfilled, (state, action) => {
+        const idx = state.tests.findIndex((t) => t.id === action.payload.id);
+        if (idx !== -1) {
+          state.tests[idx] = action.payload;
+        }
+      })
+      .addCase(deleteTest.fulfilled, (state, action) => {
+        state.tests = state.tests.filter((test) => test.id !== action.payload);
       });
   },
 });

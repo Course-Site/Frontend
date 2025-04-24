@@ -1,12 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import userReducer from "./userSlice";
-import learningReducer from "./learningSlice";
+import topicReducer from "./topicSlice";
+import lectureReducer from "./lectureSlice";
+import labReducer from "./labSlice";
+import testReducer from "./testSlice"
+import learningReducer from "./learningSlice"
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
+    topic: topicReducer,
+    lecture: lectureReducer,
+    lab: labReducer,
+    test: testReducer,
     learning: learningReducer,
   },
 });

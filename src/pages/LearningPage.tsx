@@ -1,14 +1,21 @@
-import React, { useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchTopics, fetchLectures, fetchLabs, fetchTests, createTopic } from "../store/learningSlice";
+import { fetchTopics, createTopic } from "../store/topicSlice";
+import { fetchLectures } from "../store/lectureSlice";
+import { fetchLabs } from "../store/labSlice";
+import { fetchTests } from "../store/testSlice";
 import { RootState, AppDispatch } from "../store/store";
-import type { Lecture, Lab } from "../store/learningSlice";
 import { Link } from "react-router-dom";
 import Button from "../components/Button/Button";
+import type { Lecture, Lab, Test, Topic } from "../types/types";
 
 const LearningPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { topics, lectures, labs, tests, loading, error } = useSelector((state: RootState) => state.learning);
+
+  const { topics, loading: topicsLoading, error: topicsError } = useSelector((state: RootState) => state.topic);
+  const { lectures } = useSelector((state: RootState) => state.lecture);
+  const { labs } = useSelector((state: RootState) => state.lab);
+  const { tests } = useSelector((state: RootState) => state.test);
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [newTopicTitle, setNewTopicTitle] = useState("Тема");
@@ -33,15 +40,14 @@ const LearningPage: React.FC = () => {
       });
   };
 
-  const getLectureByTopic = (topicId: string): Lecture | undefined => {
-    return lectures.find((l) => l.topicId === topicId);
-  };
+  const getLectureByTopic = (topicId: string): Lecture | undefined =>
+    lectures.find((l: Lecture) => l.topicId === topicId);
 
-  const getLabByTopic = (topicId: string): Lab | undefined => {
-    return labs.find((l) => l.topicId === topicId);
-  };
+  const getLabByTopic = (topicId: string): Lab | undefined =>
+    labs.find((l: Lab) => l.topicId === topicId);
 
-  const getTestByTopic = (topicId: string) => tests.find((t) => t.topicId === topicId);
+  const getTestByTopic = (topicId: string): Test | undefined =>
+    tests.find((t: Test) => t.topicId === topicId);
 
   const isAdmin = user?.role === "admin";
 
@@ -49,11 +55,11 @@ const LearningPage: React.FC = () => {
     <div className="max-w-4xl mx-auto mt-10">
       <h1 className="text-3xl font-bold mb-6">Обучение</h1>
 
-      {loading && <p>Загрузка тем...</p>}
-      {error && <p className="text-red-500">{error}</p>}
+      {topicsLoading && <p>Загрузка тем...</p>}
+      {topicsError && <p className="text-red-500">{topicsError}</p>}
 
       <ul className="space-y-6">
-        {topics.map((topic) => {
+        {topics.map((topic: Topic) => {
           const lecture = getLectureByTopic(topic.id);
           const lab = getLabByTopic(topic.id);
           const test = getTestByTopic(topic.id);
@@ -122,9 +128,9 @@ const LearningPage: React.FC = () => {
                   {isAdmin && (
                     <div className="flex space-x-2">
                       {test ? (
-                        <Link to={`/admin/edit-test/${test.id}`} className="btn-admin">Редактировать</Link>
+                        <Link to={`/test/edit/${test.id}`} className="btn-admin">Редактировать</Link>
                       ) : (
-                        <Link to={`/admin/create-test?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
+                        <Link to={`/test/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
                       )}
                     </div>
                   )}
@@ -144,11 +150,7 @@ const LearningPage: React.FC = () => {
               placeholder="Название темы"
               className="w-full p-2 border rounded mb-4"
             />
-            <Button
-              variant="primary"
-              className="px-3 py-2"
-              onClick={handleCreateTopic}
-            >
+            <Button variant="primary" className="px-3 py-2" onClick={handleCreateTopic}>
               Сохранить тему
             </Button>
           </li>
