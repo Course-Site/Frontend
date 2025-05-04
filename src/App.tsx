@@ -123,7 +123,7 @@ function App() {
             }
           />
           <Route
-            path="/test/:id"
+            path="/test/:testId"
             element={
               <PrivateRoute onOpenModal={() => openAuthModal("/test/:id")}>
                 <TestPage />

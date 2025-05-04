@@ -57,7 +57,7 @@ export interface Answer {
 
 export interface Question {
   id: string;
-  questionText : string;
+  text : string;
   imageUrl: string;
   number: string;
   testId: string,

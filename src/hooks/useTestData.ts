@@ -37,7 +37,7 @@ export const useTestData = (testId?: string): UseTestDataReturn => {
 
   // Мемоизированные вычисляемые данные
   const data = useMemo(() => {
-    const currentTest = testId ? tests.find(t => t.id === testId) : null;
+    const currentTest = testId ? tests.find(t => t.id === testId) || null : null;
     const topicId = currentTest?.topicId || '';
     
     // Фильтруем вопросы по testId
