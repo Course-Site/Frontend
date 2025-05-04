@@ -1,13 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { Answer, Question, ServerQuestion, Test, TestState } from "../types/types";
+import { Answer, Question, ServerQuestion, Test, TestState, TestResult } from "../types/types";
 import { RootState } from "./store";
-
-interface FullTestPayload {
-  title: string;
-  topicId: string;
-  questions: Question[];
-  answers: Answer[];
-}
 
 // Вспомогательная функция получения токена
 const getAuthHeaders = () => {
@@ -21,11 +14,14 @@ const getAuthHeaders = () => {
 const initialState: TestState & { questions: Question[] } = {
   tests: [],
   questions: [],
+  answers: [],
+  results: [],
   loading: false,
   error: null,
 };
 
 // Async thunks
+// test/getAll
 export const fetchTests = createAsyncThunk<Test[], void, { rejectValue: string }>(
   "test/fetchTests",
   async (_, { rejectWithValue }) => {
@@ -41,15 +37,31 @@ export const fetchTests = createAsyncThunk<Test[], void, { rejectValue: string }
     }
   }
 );
-
-export const createTest = createAsyncThunk<Test, { title: string; topicId: string }, { rejectValue: string }>(
+// test/findById/{testId}
+export const fetchTestById = createAsyncThunk<Test[], string, { rejectValue: string }>(
+  'test/fetchById',
+  async (testId: string, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200//api/v1/test/findById/${testId}`, {
+        headers: getAuthHeaders(),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка загрузки тестов");
+      return result;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// test/create
+export const createTest = createAsyncThunk<Test, { title: string; topicId: string; description: string  }, { rejectValue: string }>(
   "test/createTest",
-  async ({ title, topicId }, { rejectWithValue }) => {
+  async ({ title, topicId, description }, { rejectWithValue }) => {
     try {
       const response = await fetch("http://localhost:4200/api/v1/test/create", {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify({ title, topicId }),
+        body: JSON.stringify({ title, topicId, description }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Ошибка при создании теста");
@@ -59,7 +71,7 @@ export const createTest = createAsyncThunk<Test, { title: string; topicId: strin
     }
   }
 );
-
+// test/${id} (PUT)
 export const updateTest = createAsyncThunk<Test, { id: string; title: string; topicId: string }, { rejectValue: string }>(
   "test/updateTest",
   async ({ id, title, topicId }, { rejectWithValue }) => {
@@ -77,12 +89,12 @@ export const updateTest = createAsyncThunk<Test, { id: string; title: string; to
     }
   }
 );
-
+// test/delete/${id}
 export const deleteTest = createAsyncThunk<string, string, { rejectValue: string }>(
   "test/deleteTest",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/test/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test/delete/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
@@ -96,12 +108,13 @@ export const deleteTest = createAsyncThunk<string, string, { rejectValue: string
     }
   }
 );
-
+//----------------------------------------------------------------------------------------------------------------------------------
+// testQuestion/create
 export const createQuestions = createAsyncThunk<void, { testId: string; questions: ServerQuestion[] }, { rejectValue: string }>(
   "test/createQuestions",
   async ({ testId, questions }, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4200/api/v1/question/create", {
+      const response = await fetch("http://localhost:4200/api/v1/testQuestion/create", {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({ testId, questions }),
@@ -115,12 +128,12 @@ export const createQuestions = createAsyncThunk<void, { testId: string; question
     }
   }
 );
-
-export const fetchTestQuestions = createAsyncThunk<Question[], string, { rejectValue: string }>(
+// testQuestion/getAll
+export const fetchTestQuestions = createAsyncThunk<Question[], void, { rejectValue: string }>(
   "test/fetchTestQuestions",
-  async (testId, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/question/${testId}`, {
+      const response = await fetch("http://localhost:4200/api/v1/testQuestion/getAll", {
         headers: getAuthHeaders(),
       });
       const result = await response.json();
@@ -131,12 +144,44 @@ export const fetchTestQuestions = createAsyncThunk<Question[], string, { rejectV
     }
   }
 );
-
+// testQuestion/findById/${questionId}
+export const fetchTestQuestionById = createAsyncThunk<Question, string, { rejectValue: string }>(
+  "test/fetchTestQuestionById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200/api/v1/testQuestion/findById/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error("Ошибка при загрузке вопроса");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testQuestion/delete/${id}
+export const deleteTestQuestion = createAsyncThunk<string, string, { rejectValue: string }>(
+  "test/deleteTestQuestion",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200/api/v1/testQuestion/delete/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error("Ошибка при удалении вопроса");
+      return id;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+//----------------------------------------------------------------------------------------------------------------------------------
+// testAnswer/create
 export const createAnswers = createAsyncThunk<void, { questionId: string; answers: Answer[] }, { rejectValue: string }>(
   "test/createAnswers",
   async ({ questionId, answers }, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4200/api/v1/answer/create", {
+      const response = await fetch("http://localhost:4200/api/v1/testAnswer/create", {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({ questionId, answers }),
@@ -150,12 +195,165 @@ export const createAnswers = createAsyncThunk<void, { questionId: string; answer
     }
   }
 );
-
+// testAnswer/getAll
+export const fetchAllTestAnswers = createAsyncThunk<Answer[], void, { rejectValue: string }>(
+  "test/fetchAllAnswers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch("http://localhost:4200/api/v1/testAnswer/getAll", {
+        headers: getAuthHeaders(),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка загрузки ответов");
+      return result;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testAnswer/findById/${id}
+export const fetchTestAnswerById = createAsyncThunk(
+  "test/fetchTestAnswerById",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`http://localhost:4200/api/v1/testAnswer/findById/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      if (!res.ok) throw new Error("Failed to fetch answer");
+      return await res.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testAnswer/${id} (PUT)
+export const updateAnswer = createAsyncThunk<Answer, Answer, { rejectValue: string }>(
+  "test/updateAnswer",
+  async (answer, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200/api/v1/testAnswer/${answer.id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(answer),
+      });
+      if (!response.ok) throw new Error("Ошибка при обновлении ответа");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testAnswer/delete/${id}
+export const deleteTestAnswer = createAsyncThunk(
+  "test/deleteTestAnswer",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`http://localhost:4200/api/v1/testAnswer/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      if (!res.ok) throw new Error("Failed to delete answer");
+      return id;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+//----------------------------------------------------------------------------------------------------------------------------------
+// testResult/create
+export const createTestResult = createAsyncThunk(
+  "test/createTestResult",
+  async (data, { rejectWithValue }) => {
+    try {
+      const res = await fetch("http://localhost:4200/api/v1/testResult/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create test result");
+      return await res.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testResult/getAll
+export const fetchAllTestResults = createAsyncThunk<TestResult[], void, { rejectValue: string }>(
+  "test/fetchAllTestResults",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch("http://localhost:4200/api/v1/testResult/getAll", {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error("Ошибка при получении результатов тестов");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testResult/findById/${id}
+export const fetchTestResultById = createAsyncThunk<TestResult, string, { rejectValue: string }>(
+  "test/fetchTestResultById",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200/api/v1/testResult/findById/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error("Ошибка при получении результата");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testResult/${id} (PUT)
+export const updateTestResult = createAsyncThunk<TestResult, TestResult, { rejectValue: string }>(
+  "test/updateTestResult",
+  async (result, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200/api/v1/testResult/${result.id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(result),
+      });
+      if (!response.ok) throw new Error("Ошибка при обновлении результата");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testResult/delete/${id}
+export const deleteTestResult = createAsyncThunk<string, string, { rejectValue: string }>(
+  "test/deleteTestResult",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`http://localhost:4200/api/v1/testResult/delete/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error("Ошибка при удалении результата");
+      return id;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+//----------------------------------------------------------------------------------------------------------------------------------
 export const createFullTest = createAsyncThunk<
   void,
   {
     title: string;
     topicId: string;
+    description: string;
     questions: Array<{
       questionText: string;
       imageUrl: string;
@@ -167,7 +365,7 @@ export const createFullTest = createAsyncThunk<
     }>;
   },
   { state: RootState }
->('test/createFullTest', async ({ title, topicId, questions, answers = [] }, thunkAPI) => {
+>('test/createFullTest', async ({ title, topicId, description, questions, answers = [] }, thunkAPI) => {
   try {
     console.group('Создание полного теста');
     
@@ -175,7 +373,7 @@ export const createFullTest = createAsyncThunk<
     const testResponse = await fetch('http://localhost:4200/api/v1/test/create', {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ title, topicId }),
+      body: JSON.stringify({ title, topicId, description }),
     });
 
     if (!testResponse.ok) {
@@ -269,6 +467,7 @@ const testSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
+      //Test
       .addCase(fetchTests.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -288,12 +487,72 @@ const testSlice = createSlice({
         const idx = state.tests.findIndex(t => t.id === action.payload.id);
         if (idx !== -1) state.tests[idx] = action.payload;
       })
+      .addCase(fetchTestById.fulfilled, (state, action) => {
+        state.tests = action.payload;
+      })
       .addCase(deleteTest.fulfilled, (state, action) => {
         state.tests = state.tests.filter(test => test.id !== action.payload);
       })
+      // testQuestion
       .addCase(fetchTestQuestions.fulfilled, (state, action) => {
         state.questions = action.payload;
+      })
+      .addCase(createQuestions.fulfilled, () => {
+        //
+      })
+      .addCase(fetchTestQuestionById.fulfilled, (state, action) => {
+        const existingIndex = state.questions.findIndex(q => q.id === action.payload.id);
+        if (existingIndex !== -1) {
+          state.questions[existingIndex] = action.payload;
+        } else {
+          state.questions.push(action.payload);
+        }
+      })
+      .addCase(deleteTestQuestion.fulfilled, (state, action) => {
+        state.questions = state.questions.filter(q => q.id !== action.payload);
+      })
+      // Answers
+      .addCase(fetchAllTestAnswers.fulfilled, (state, action) => {
+        state.answers = action.payload;
+      })
+      .addCase(fetchTestAnswerById.fulfilled, (state, action) => {
+        const existingIndex = state.answers.findIndex(a => a.id === action.payload.id);
+        if (existingIndex !== -1) {
+          state.answers[existingIndex] = action.payload;
+        } else {
+          state.answers.push(action.payload);
+        }
+      })
+      .addCase(updateAnswer.fulfilled, (state, action) => {
+        const idx = state.answers.findIndex(a => a.id === action.payload.id);
+        if (idx !== -1) state.answers[idx] = action.payload;
+      })
+      .addCase(deleteTestAnswer.fulfilled, (state, action) => {
+        state.answers = state.answers.filter(a => a.id !== action.payload);
+      })
+      // Results
+      .addCase(fetchAllTestResults.fulfilled, (state, action) => {
+        state.results = action.payload;
+      })
+      .addCase(fetchTestResultById.fulfilled, (state, action) => {
+        const idx = state.results.findIndex(r => r.id === action.payload.id);
+        if (idx !== -1) {
+          state.results[idx] = action.payload;
+        } else {
+          state.results.push(action.payload);
+        }
+      })
+      .addCase(createTestResult.fulfilled, (state, action) => {
+        state.results.push(action.payload);
+      })
+      .addCase(updateTestResult.fulfilled, (state, action) => {
+        const idx = state.results.findIndex(r => r.id === action.payload.id);
+        if (idx !== -1) state.results[idx] = action.payload;
+      })
+      .addCase(deleteTestResult.fulfilled, (state, action) => {
+        state.results = state.results.filter(r => r.id !== action.payload);
       });
+
   },
 });
 

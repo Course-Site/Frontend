@@ -1,109 +1,80 @@
-// src/pages/TestPage.tsx
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-
-interface Answer {
-  text: string;
-  isCorrect: boolean;
-}
-
-interface Question {
-  questionText: string;
-  imageUrl?: string;
-  answers: Answer[];
-}
-
-interface Test {
-  title: string;
-  questions: Question[];
-}
+import React, { useState } from 'react';
+import { useTestData } from '../hooks/useTestData';
 
 const TestPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [test, setTest] = useState<Test | null>(null);
-  const [userAnswers, setUserAnswers] = useState<number[]>([]);
-  const [result, setResult] = useState<number | null>(null);
+  const testId = "9745d555-8181-4554-b525-76169eac91cb";
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  
+  const { 
+    test,
+    questions,
+    answers,
+    loading,
+    error,
+    topicId
+  } = useTestData(testId);
 
-  useEffect(() => {
-    const fetchTest = async () => {
-      try {
-        const res = await fetch(`http://localhost:4200/api/v1/test/findById/${id}`);
-        const data = await res.json();
-        setTest(data);
-        setUserAnswers(new Array(data.questions.length).fill(-1)); // -1 = не выбран
-      } catch (err) {
-        console.error("Ошибка загрузки теста", err);
-      }
-    };
-
-    if (id) fetchTest();
-  }, [id]);
-
-  const handleAnswerSelect = (questionIndex: number, answerIndex: number) => {
-    const newAnswers = [...userAnswers];
-    newAnswers[questionIndex] = answerIndex;
-    setUserAnswers(newAnswers);
+  const handleSelectQuestion = async (questionId: string) => {
+    setSelectedQuestionId(questionId);
   };
 
-  const handleSubmit = () => {
-    if (!test) return;
+  const selectedQuestion = questions.find(q => q.id === selectedQuestionId);
 
-    let correctCount = 0;
-
-    test.questions.forEach((question, index) => {
-      const userAnswerIndex = userAnswers[index];
-      if (userAnswerIndex !== -1 && question.answers[userAnswerIndex]?.isCorrect) {
-        correctCount++;
-      }
-    });
-
-    setResult(correctCount);
-  };
-
-  if (!test) {
-    return <div className="p-4">Загрузка теста...</div>;
-  }
+  if (loading) return <div>Загрузка...</div>;
+  if (error) return <div>Ошибка: {error}</div>;
+  if (!test) return <div>Тест не найден</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
-      <h1 className="text-2xl font-bold">{test.title}</h1>
+    <div className="container mx-auto p-4">
+      {/* Заголовок теста */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">{test.title}</h1>
+        <p className="text-gray-600">Тема: {topicId}</p>
+      </div>
 
-      {test.questions.map((question, qIndex) => (
-        <div key={qIndex} className="border rounded p-4 space-y-2">
-          <h2 className="font-semibold">{qIndex + 1}. {question.questionText}</h2>
-          {question.imageUrl && (
-            <img src={question.imageUrl} alt={`Вопрос ${qIndex + 1}`} className="w-64 rounded" />
-          )}
-
-          <div className="space-y-2">
-            {question.answers.map((answer, aIndex) => (
-              <label key={aIndex} className="block">
-                <input
-                  type="radio"
-                  name={`question-${qIndex}`}
-                  checked={userAnswers[qIndex] === aIndex}
-                  onChange={() => handleAnswerSelect(qIndex, aIndex)}
-                  className="mr-2"
-                />
-                {answer.text}
-              </label>
+      {/* Список вопросов и ответов */}
+      <div className="flex gap-4">
+        <div className="w-1/4">
+          <h2 className="font-semibold mb-4">Вопросы</h2>
+          <ul className="space-y-2">
+            {questions.map(q => (
+              <li key={q.id}>
+                <button
+                  onClick={() => handleSelectQuestion(q.id)}
+                  className={`w-full text-left p-2 rounded ${
+                    selectedQuestionId === q.id ? 'bg-blue-100' : ''
+                  }`}
+                >
+                  Вопрос {q.number}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
-      ))}
 
-      {result === null ? (
-        <button
-          onClick={handleSubmit}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Завершить тест
-        </button>
-      ) : (
-        <div className="text-lg font-semibold">
-          Результат: {result} из {test.questions.length} правильных ответов
+        <div className="flex-1">
+          {selectedQuestion && (
+            <>
+              <h2 className="text-xl font-semibold mb-4">
+                {selectedQuestion.questionText}
+              </h2>
+              <div className="space-y-2">
+                {answers.filter(a => a.testQuestionId === selectedQuestionId).map(answer => (
+                  <div key={answer.id} className="flex items-center p-2 border rounded">
+                    <input 
+                      type="checkbox" 
+                      checked={answer.isCorrect} 
+                      readOnly 
+                      className="mr-2"
+                    />
+                    {answer.text}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

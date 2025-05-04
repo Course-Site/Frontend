@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks'; // путь может отличаться
 import { createFullTest } from '../store/testSlice'; // импорт твоего thunk
+//import { Answer, Question, TestEditorProps } from '../types/types';
 
 interface Answer {
   text: string;
@@ -24,6 +25,7 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
 
   const [title, setTitle] = useState('');
   const [topicId, setTopicId] = useState('');
+  const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<Question[]>([
     {
       questionText: '',
@@ -32,9 +34,17 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
     },
   ]);
 
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const topicIdFromUrl = queryParams.get('topicId');
+    if (topicIdFromUrl) {
+      setTopicId(topicIdFromUrl);
+    }
+  }, [location.search]);
+
   const handleSave = async () => {
-    if (!topicId || !title) {
-      alert('Пожалуйста, укажите тему и название теста.');
+    if (!topicId || !title || !description) {
+      alert('Пожалуйста, укажите тему, описнаие и название теста.');
       return;
     }
   
@@ -59,6 +69,7 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
     const payload = {
       title,
       topicId,
+      description,
       questions: questions.map(q => ({
         questionText: q.questionText,
         imageUrl: q.imageUrl
@@ -139,16 +150,22 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
           placeholder="Введите название теста"
         />
       </div>
-
       <div>
-        <label className="block font-semibold mb-1">ID темы*</label>
-        <input
+        <label className="block font-semibold mb-1">Описание теста</label>
+        <textarea
           className="border p-2 w-full rounded"
-          value={topicId}
-          onChange={(e) => setTopicId(e.target.value)}
-          placeholder="Введите ID темы"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Введите описание (необязательно)"
+          rows={3}
         />
       </div>
+
+      {topicId && (
+        <div className="bg-gray-100 p-2 rounded">
+          <strong>Тема:</strong> {topicId}
+        </div>
+      )}
 
       <div className="space-y-4">
         {questions.map((question, qIndex) => (
