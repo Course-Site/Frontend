@@ -161,7 +161,7 @@ const TestPage: React.FC = () => {
       <div className="mt-8 text-center">
         <button 
           onClick={calculateResults}
-          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          className="bg-amber-500 text-white px-6 py-2 rounded hover:bg-amber-600"
         >
           Проверить результаты
         </button>
