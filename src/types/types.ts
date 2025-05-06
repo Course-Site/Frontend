@@ -102,7 +102,7 @@ export interface LearningState {
 }
 
 export interface ServerQuestion {
-  questionText: string;
+  text: string;
   imageUrl: string;
   answers: Answer[];
 }

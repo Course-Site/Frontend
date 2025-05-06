@@ -141,7 +141,7 @@ const LabEditor: React.FC<LabEditorProps> = ({
       )}
 
       <Editor
-        apiKey="fd4zawezgmeqthwbbgtlvwiievumnw9lob7vw6ljv0napxrl"
+        apiKey="rpdxhc37clr2frnmir4r1fdqw7kr6ml5991hgmsfvww0ehx0"
         value={content}
         onEditorChange={handleEditorChange}
         init={{

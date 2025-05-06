@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks'; // путь может отличаться
 import { createFullTest } from '../store/testSlice'; // импорт твоего thunk
+import Button from '../components/Button/Button';
 //import { Answer, Question, TestEditorProps } from '../types/types';
 
 interface Answer {
@@ -10,7 +11,7 @@ interface Answer {
 }
 
 interface Question {
-  questionText: string;
+  text: string;
   imageUrl: string;
   answers: Answer[];
 }
@@ -28,7 +29,7 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
   const [description, setDescription] = useState('');
   const [questions, setQuestions] = useState<Question[]>([
     {
-      questionText: '',
+      text: '',
       imageUrl: '',
       answers: [{ text: '', isCorrect: false }],
     },
@@ -49,7 +50,7 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
     }
   
     // Проверка вопросов и ответов
-    if (questions.some(q => !q.questionText.trim())) {
+    if (questions.some(q => !q.text.trim())) {
       alert('Все вопросы должны содержать текст.');
       return;
     }
@@ -71,7 +72,7 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
       topicId,
       description,
       questions: questions.map(q => ({
-        questionText: q.questionText,
+        text: q.text,
         imageUrl: q.imageUrl
       })),
       answers: questions.flatMap((q, qIndex) => 
@@ -97,7 +98,7 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
     setQuestions([
       ...questions,
       {
-        questionText: '',
+        text: '',
         imageUrl: '',
         answers: [{ text: '', isCorrect: false }],
       },
@@ -185,10 +186,10 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
               <label className="block font-semibold mb-1">Текст вопроса*</label>
               <input
                 className="border p-2 w-full rounded"
-                value={question.questionText}
+                value={question.text}
                 onChange={(e) => {
                   const updated = [...questions];
-                  updated[qIndex].questionText = e.target.value;
+                  updated[qIndex].text = e.target.value;
                   setQuestions(updated);
                 }}
               />
@@ -246,19 +247,13 @@ const TestEditor: React.FC<TestEditorProps> = ({ isEdit }) => {
       </div>
 
       <div className="flex justify-between">
-        <button
-          onClick={handleAddQuestion}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow"
-        >
+        <Button variant="test-secondary" onClick={handleAddQuestion} >
           + Добавить вопрос
-        </button>
+        </Button>
 
-        <button
-          onClick={handleSave}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow text-lg"
-        >
+        <Button variant="test-primary" onClick={handleSave}>
           Создать тест
-        </button>
+        </Button>
       </div>
     </div>
   );

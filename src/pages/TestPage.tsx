@@ -46,6 +46,7 @@ const TestPage: React.FC = () => {
   // Проверка результатов
   const calculateResults = () => {
     let score = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let totalCorrect = 0;
 
     questions.forEach(question => {

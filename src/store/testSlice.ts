@@ -355,7 +355,7 @@ export const createFullTest = createAsyncThunk<
     topicId: string;
     description: string;
     questions: Array<{
-      questionText: string;
+      text: string;
       imageUrl: string;
     }>;
     answers?: Array<{ // Сделаем answers опциональным
@@ -388,8 +388,8 @@ export const createFullTest = createAsyncThunk<
     const createdQuestions = await Promise.all(
       questions.map(async (q, index) => {
         const questionData = {
-          title: q.questionText,
-          text: q.questionText,
+          title: q.text,
+          text: q.text,
           imageUrl: q.imageUrl || null,
           number: index + 1,
           testId: test.id,
