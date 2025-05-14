@@ -52,7 +52,7 @@ export interface Answer {
   id: string;
   text: string;
   isCorrect: boolean;
-  testQuestionId: string;
+  questionId: string;
 }
 
 export interface Question {
@@ -79,6 +79,7 @@ export interface LectureState {
 export interface LabState {
   labs: Lab[];
   labResults: LabResult[];
+  currentLab: Lab | null;
   loading: boolean;
   error: string | null;
 }
@@ -90,6 +91,8 @@ export interface TestState {
   results: TestResult[];
   loading: boolean;
   error: string | null;
+  submissionLoading: boolean; // Добавляем
+  submissionError: string | null; // Добавляем
 }
 
 

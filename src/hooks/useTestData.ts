@@ -40,15 +40,16 @@ export const useTestData = (testId?: string): UseTestDataReturn => {
     const currentTest = testId ? tests.find(t => t.id === testId) || null : null;
     const topicId = currentTest?.topicId || '';
     
-    // Фильтруем вопросы по testId
-    const testQuestions = allQuestions.filter(q => q.testId === testId);
+    const testQuestions = allQuestions
+    .filter(q => q.testId === testId)
+    .sort((a, b) => Number(a.number ?? 0) - Number(b.number ?? 0));
     
     // Получаем все ID вопросов теста
     const questionIds = testQuestions.map(q => q.id);
     
     // Фильтруем ответы по вопросам теста
     const testAnswers = allAnswers.filter(a => 
-      questionIds.includes(a.testQuestionId)
+      questionIds.includes(a.questionId)
     );
 
     return {

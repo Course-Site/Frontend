@@ -18,6 +18,8 @@ const initialState: TestState & { questions: Question[] } = {
   results: [],
   loading: false,
   error: null,
+  submissionLoading: false,
+  submissionError: null,
 };
 
 // Async thunks
@@ -139,6 +141,29 @@ export const fetchTestQuestions = createAsyncThunk<Question[], void, { rejectVal
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Ошибка загрузки вопросов");
       return result;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
+// testQuestion/${question.id} (PUT)
+export const updateQuestion = createAsyncThunk<Question, Partial<Question> & { id: string }, { rejectValue: string }>(
+  "test/updateQuestion",
+  async (questionData, { rejectWithValue }) => {
+    try {
+      const { id, ...updateData } = questionData;
+      const response = await fetch(`http://localhost:4200/api/v1/testQuestion/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Ошибка при обновлении вопроса");
+      }
+
+      return await response.json();
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
     }
@@ -426,7 +451,7 @@ export const createFullTest = createAsyncThunk<
         const answerData = {
           text: answer.text,
           isCorrect: answer.isCorrect,
-          testQuestionId: questionId,
+          questionId: questionId,
           number: i + 1,
         };
 
@@ -459,6 +484,48 @@ export const createFullTest = createAsyncThunk<
     );
   }
 });
+
+export const submitTestAnswers = createAsyncThunk(
+  'test/submitAnswers',
+  async (payload: { 
+    testId: string; 
+    answers: Array<{ 
+      questionId: string; 
+      selectedAnswerIds: string[] 
+    }> 
+  }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('User not authorized');
+
+      // Убедимся, что testId в правильном формате
+      const cleanTestId = payload.testId.replace(/['"]/g, '').trim();
+      
+      const response = await fetch('http://localhost:4200/api/v1/test-evaluate/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...payload,
+          testId: cleanTestId // Используем очищенный testId
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('Backend error:', error); // Логируем ошибку с бэкенда
+        throw new Error(error.message || 'Failed to submit answers');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Submission error:', error); // Логируем ошибку
+      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+);
 
 // Slice
 const testSlice = createSlice({
@@ -508,6 +575,25 @@ const testSlice = createSlice({
           state.questions.push(action.payload);
         }
       })
+      .addCase(updateQuestion.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateQuestion.fulfilled, (state, action) => {
+        state.loading = false;
+        // Находим и обновляем вопрос в массиве
+        const index = state.questions.findIndex(q => q.id === action.payload.id);
+        if (index !== -1) {
+          state.questions[index] = {
+            ...state.questions[index],
+            ...action.payload
+          };
+        }
+      })
+      .addCase(updateQuestion.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Неизвестная ошибка при обновлении вопроса";
+      })
       .addCase(deleteTestQuestion.fulfilled, (state, action) => {
         state.questions = state.questions.filter(q => q.id !== action.payload);
       })
@@ -551,7 +637,18 @@ const testSlice = createSlice({
       })
       .addCase(deleteTestResult.fulfilled, (state, action) => {
         state.results = state.results.filter(r => r.id !== action.payload);
-      });
+      })
+      .addCase(submitTestAnswers.pending, (state) => {
+      state.submissionLoading = true;
+      state.submissionError = null;
+    })
+    .addCase(submitTestAnswers.fulfilled, (state) => {
+      state.submissionLoading = false;
+    })
+    .addCase(submitTestAnswers.rejected, (state, action) => {
+      state.submissionLoading = false;
+      state.submissionError = action.payload as string;
+    });
 
   },
 });

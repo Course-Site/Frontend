@@ -4,6 +4,7 @@ import { Lab, LabResult, LabState } from "../types/types";
 const initialState: LabState = {
   labs: [],
   labResults: [],
+  currentLab: null,
   loading: false,
   error: null,
 };
@@ -30,6 +31,33 @@ export const fetchLabs = createAsyncThunk<Lab[], void, { rejectValue: string }>(
     }
   }
 );
+
+export const fetchLabById = createAsyncThunk<
+  Lab,
+  string,
+  { rejectValue: string }
+>(
+  'learning/fetchLabById',
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:4200/api/v1/lab/findById/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Ошибка загрузки лабораторной работы');
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Неизвестная ошибка');
+    }
+  }
+);
+
 
 export const createLab = createAsyncThunk<
   Lab,
@@ -219,6 +247,19 @@ const labSlice = createSlice({
       // Лабораторные работы
             .addCase(fetchLabs.fulfilled, (state, action) => {
               state.labs = action.payload;
+            })
+            .addCase(fetchLabById.pending, (state) => {
+              state.loading = true;
+              state.error = null;
+              state.currentLab = null;
+            })
+            .addCase(fetchLabById.fulfilled, (state, action) => {
+              state.loading = false;
+              state.currentLab = action.payload;
+            })
+            .addCase(fetchLabById.rejected, (state, action) => {
+              state.loading = false;
+              state.error = action.payload || "Ошибка загрузки лабораторной";
             })
             .addCase(createLab.fulfilled, (state, action) => {
               state.labs.push(action.payload);
