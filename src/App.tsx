@@ -12,6 +12,7 @@ import LabPage from "./pages/LabPage";
 import LabEditor from "./pages/LabEditor";
 import TestEditor from "./pages/TestEditor";
 import TestPage from "./pages/TestPage";
+import NeuralNetworkChat from "./pages/NeuralNetworkChat";
 
 function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -49,6 +50,16 @@ function App() {
             element={
               <PrivateRoute onOpenModal={() => openAuthModal("/profile")}>
                 <ProfilePage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Страница нейросети */}
+          <Route
+            path="/ai"
+            element={
+              <PrivateRoute onOpenModal={() => openAuthModal("/profile")}>
+                <NeuralNetworkChat />
               </PrivateRoute>
             }
           />
