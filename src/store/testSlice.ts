@@ -20,6 +20,7 @@ const initialState: TestState & { questions: Question[] } = {
   error: null,
   submissionLoading: false,
   submissionError: null,
+  testResultByTestAndUser: null,
 };
 
 // Async thunks
@@ -372,6 +373,19 @@ export const deleteTestResult = createAsyncThunk<string, string, { rejectValue: 
     }
   }
 );
+
+export const getTestResultByTestAndUser = createAsyncThunk(
+  'test/getTestResultByTestAndUser',
+  async ({ testId, userId }: { testId: string; userId: string }) => {
+    const res = await fetch(
+      `http://localhost:4200/api/v1/testresult/GetByTestAndUser?testId=${testId}&userId=${userId}`,
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+    return await res.json();
+  }
+);
 //----------------------------------------------------------------------------------------------------------------------------------
 export const createFullTest = createAsyncThunk<
   void,
@@ -648,6 +662,10 @@ const testSlice = createSlice({
     .addCase(submitTestAnswers.rejected, (state, action) => {
       state.submissionLoading = false;
       state.submissionError = action.payload as string;
+    })
+    // 
+    builder.addCase(getTestResultByTestAndUser.fulfilled, (state, action) => {
+      state.testResultByTestAndUser = action.payload;
     });
 
   },

@@ -6,6 +6,7 @@ import lectureReducer from "./lectureSlice";
 import labReducer from "./labSlice";
 import testReducer from "./testSlice"
 import learningReducer from "./learningSlice"
+import userTestStatisticsReducer from "./testStatistic"
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     lab: labReducer,
     test: testReducer,
     learning: learningReducer,
+    userTestStatistics: userTestStatisticsReducer,
   },
 });
 

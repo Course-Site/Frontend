@@ -32,6 +32,7 @@ export interface TestResult {
   testId: string;
   userId: string;
   score: number;
+  testResultByTestAndUser: number;
 }
 
 export interface LabResult {
@@ -45,6 +46,22 @@ export interface LabResult {
     id: string;
     name: string;
     email: string;
+  };
+}
+
+export interface UserTestStatistic {
+  id: string;
+  userId: string;
+  testId: string;
+  score: number;
+  test?: {
+    id: string;
+    title: string;
+  };
+  labReport?: {
+    id: string;
+    fileUrl: string;
+    labId: string;
   };
 }
 
@@ -93,6 +110,7 @@ export interface TestState {
   error: string | null;
   submissionLoading: boolean; // Добавляем
   submissionError: string | null; // Добавляем
+  testResultByTestAndUser: number | null;
 }
 
 

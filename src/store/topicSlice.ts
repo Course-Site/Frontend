@@ -56,6 +56,32 @@ export const createTopic = createAsyncThunk<Topic, { title: string; description?
   }
 );
 
+export const deleteTopic = createAsyncThunk<string, string, { rejectValue: string }>(
+  "learning/deleteTopic",
+  async (id, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/topic/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Ошибка при удалении темы");
+      }
+
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
 const topicSlice = createSlice({
   name: "topic",
   initialState,
@@ -85,6 +111,18 @@ const topicSlice = createSlice({
       .addCase(createTopic.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Ошибка при создании темы";
+      })
+      .addCase(deleteTopic.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteTopic.fulfilled, (state, action) => {
+        state.loading = false;
+        state.topics = state.topics.filter(topic => topic.id !== action.payload);
+      })
+      .addCase(deleteTopic.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка при удалении темы";
       });
   },
 });

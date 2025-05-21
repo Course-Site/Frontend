@@ -8,6 +8,13 @@ import { RootState, AppDispatch } from "../store/store";
 import { Link } from "react-router-dom";
 import Button from "../components/Button/Button";
 import type { Lecture, Lab, Test, Topic } from "../types/types";
+import { X } from 'lucide-react';
+
+import { deleteTopic } from "../store/topicSlice";
+import { deleteLecture } from "../store/lectureSlice";
+import { deleteLab } from "../store/labSlice";
+import { deleteTest } from "../store/testSlice";
+
 
 const LearningPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,6 +56,22 @@ const LearningPage: React.FC = () => {
   const getTestByTopic = (topicId: string): Test | undefined =>
     tests.find((t: Test) => t.topicId === topicId);
 
+  const handleDeleteTopic = (id: string) => {
+    dispatch(deleteTopic(id));
+  };
+
+  const handleDeleteLecture = (id: string) => {
+    dispatch(deleteLecture(id));
+  };
+
+  const handleDeleteLab = (id: string) => {
+    dispatch(deleteLab(id));
+  };
+
+  const handleDeleteTest = (id: string) => {
+    dispatch(deleteTest(id));
+  };
+
   const isAdmin = user?.role === "admin";
 
   return (
@@ -66,7 +89,14 @@ const LearningPage: React.FC = () => {
 
           return (
             <li key={topic.id} className="border border-black p-4 rounded shadow">
-              <h2 className="text-xl font-semibold">{topic.title}</h2>
+              <div className="flex justify-between">
+                <h2 className="text-xl font-semibold">{topic.title}</h2>
+                {isAdmin && (
+                  <div className="flex justify-end mt-2">
+                    <Button variant="outline" onClick={() => handleDeleteTopic(topic.id)}><X/></Button>
+                  </div>
+                )}
+              </div>
               <p className="text-gray-600">{topic.description}</p>
 
               <div className="mt-4 space-y-2">
@@ -84,7 +114,10 @@ const LearningPage: React.FC = () => {
                   {isAdmin && (
                     <div className="flex space-x-2">
                       {lecture ? (
-                        <Link to={`/lecture/edit/${lecture.id}`} className="btn-admin">Изменить</Link>
+                        <>
+                          <Link to={`/lecture/edit/${lecture.id}`} className="btn-admin">Изменить</Link>
+                          <Button variant="outline" onClick={() => handleDeleteLecture(lecture.id)}><X/></Button>
+                        </>
                       ) : (
                         <Link to={`/lecture/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
                       )}
@@ -106,7 +139,10 @@ const LearningPage: React.FC = () => {
                   {isAdmin && (
                     <div className="flex space-x-2">
                       {lab ? (
-                        <Link to={`/lab/edit/${lab.id}`} className="btn-admin">Редактировать</Link>
+                        <>
+                          <Link to={`/lab/edit/${lab.id}`} className="btn-admin">Редактировать</Link>
+                          <Button variant="outline" onClick={() => handleDeleteLab(lab.id)}><X/></Button>
+                        </>
                       ) : (
                         <Link to={`/lab/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
                       )}
@@ -128,7 +164,10 @@ const LearningPage: React.FC = () => {
                   {isAdmin && (
                     <div className="flex space-x-2">
                       {test ? (
-                        <Link to={`/test/edit/${test.id}`} className="btn-admin">Редактировать</Link>
+                        <>
+                          <Link to={`/test/edit/${test.id}`} className="btn-admin">Редактировать</Link>
+                          <Button variant="outline" onClick={() => handleDeleteTest(test.id)}><X/></Button>
+                        </>
                       ) : (
                         <Link to={`/test/create?topicId=${topic.id}`} className="btn-admin">Добавить</Link>
                       )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Button from "../components/Button/Button";
 import AddUserForm from "../components/Modals/AddUserForm"; // путь может отличаться
+import { Link } from "react-router-dom";
 
 interface User {
   id: string;
@@ -58,6 +59,7 @@ const AdminPanel: React.FC = () => {
             <p>{user.name}</p>
             <p className="text-sm text-gray-500">{user.email}</p>
           </div>
+          <Link to={`/profile/admin/statistic/user/${user.id}`}>Статистика</Link>
           <button
             onClick={() => deleteUser(user.id)}
             className="text-red-500 hover:underline"

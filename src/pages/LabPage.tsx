@@ -1,92 +1,70 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-
-interface Lab {
-  title: string;
-  content: string;
-  topicId?: string;
-}
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { fetchLabById } from "../store/labSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store"; // Убедись, что путь корректный
 
 const LabPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [lab, setLab] = useState<Lab | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const { currentLab: lab, loading, error } = useAppSelector((state) => state.lab);
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [grade, setGrade] = useState("Оценка пока не выставлена");
 
   useEffect(() => {
-    const fetchLab = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    if (id) {
+      dispatch(fetchLabById(id));
+    }
+  }, [dispatch, id]);
 
-        if (!id) {
-          throw new Error("ID лабораторной работы не указан");
-        }
-
-        // Проверка формата ID
-        const isValidUUID = (id: string) => 
-          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
-        console.log(id);
-        
-        if (!isValidUUID(id)) {
-          throw new Error("Неверный формат ID лабораторной работы");
-        }
-
-        const token = localStorage.getItem("token");
-        console.log("Используемый токен:", token);
-        
-        if (!token) {
-          throw new Error("Требуется авторизация");
-        }
-
-        const response = await fetch(`http://localhost:4200/api/v1/lab/findById/${id}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        console.log("Статус ответа:", response.status);
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message || 
-            `Ошибка сервера: ${response.status} ${response.statusText}`
-          );
-        }
-
-        const data = await response.json();
-        console.log("Полученные данные:", data);
-        
-        if (!data.title || !data.content) {
-          throw new Error("Неполные данные лабораторной работы");
-        }
-
-        setLab(data);
-      } catch (error) {
-        console.error("Полная ошибка:", error);
-        setError(error instanceof Error ? error.message : "Неизвестная ошибка");
-      } finally {
-        setLoading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
+      if (
+        ![
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ].includes(file.type)
+      ) {
+        alert("Можно загружать только .pdf или .doc/.docx файлы");
+        return;
       }
-    };
-
-    fetchLab();
-  }, [id]);
+      setUploadedFile(file);
+      console.log("Файл загружен:", file.name);
+    }
+  };
 
   if (loading) return <p className="text-center">Загрузка лабораторной работы...</p>;
   if (error) return <p className="text-center text-red-500">Ошибка: {error}</p>;
   if (!lab) return <p className="text-center">Лабораторная работа не найдена.</p>;
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{lab.title}</h1>
-      <div
-        className="prose font-mono" // Добавлен font-mono для моноширинного шрифта
-        dangerouslySetInnerHTML={{ __html: lab.content }}
-      />
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">{lab.title}</h1>
+      <div className="prose" dangerouslySetInnerHTML={{ __html: lab.content }} />
+
+      {user?.role === "user" && (
+        <div className="mt-8 p-4 border rounded-md bg-gray-50">
+          <h2 className="text-lg font-semibold mb-2">Загрузка лабораторной работы</h2>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-gray-700 mb-2"
+          />
+          {uploadedFile && <p className="text-green-600">Загружен файл: {uploadedFile.name}</p>}
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ваша оценка:</label>
+            <div className="p-2 border rounded bg-white text-gray-800">{grade}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
