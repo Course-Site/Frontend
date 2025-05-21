@@ -15,8 +15,21 @@ export interface Lecture {
 export interface Lab {
   id: string;
   title: string;
-  topicId: string;
+  description?: string;
   content: string;
+  topicId: string;
+  maxScore: number;
+}
+
+export interface LabReport {
+  id: string;
+  filename: string;
+  filepath: string;
+  filetype: string;
+  size: number;
+  uploadedAt: string;
+  userId: string;
+  labId: string;
 }
 
 export interface Test {
@@ -37,7 +50,8 @@ export interface TestResult {
 export interface LabResult {
   id: string;
   submissionFileUrl?: string;
-  score?: number;
+  score: number;
+  percentage: number;
   submittedAt: Date;
   userId: string;
   labId: string;
@@ -46,6 +60,25 @@ export interface LabResult {
     name: string;
     email: string;
   };
+}
+
+export interface LabState {
+  labs: Lab[];
+  currentLab: Lab | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export interface LabReportState {
+  reports: LabReport[];
+  loading: boolean;
+  error: string | null;
+}
+
+export interface LabResultState {
+  results: LabResult[];
+  loading: boolean;
+  error: string | null;
 }
 
 export interface UserTestStatistic {
@@ -88,14 +121,6 @@ export interface TopicState {
 
 export interface LectureState {
   lectures: Lecture[];
-  loading: boolean;
-  error: string | null;
-}
-
-export interface LabState {
-  labs: Lab[];
-  labResults: LabResult[];
-  currentLab: Lab | null;
   loading: boolean;
   error: string | null;
 }

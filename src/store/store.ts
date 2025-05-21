@@ -4,6 +4,8 @@ import userReducer from "./userSlice";
 import topicReducer from "./topicSlice";
 import lectureReducer from "./lectureSlice";
 import labReducer from "./labSlice";
+import labReportReducer from "./labReportSlice";
+import labResultReducer from "./labResultSlice";
 import testReducer from "./testSlice";
 import learningReducer from "./learningSlice";
 import testResultReducer from "./testResultSlice";
@@ -18,6 +20,8 @@ export const store = configureStore({
     topic: topicReducer,
     lecture: lectureReducer,
     lab: labReducer,
+    labReport: labReportReducer,
+    labResult: labResultReducer,
     test: testReducer,
     learning: learningReducer,
     testResult: testResultReducer,

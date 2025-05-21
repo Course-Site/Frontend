@@ -1,21 +1,19 @@
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom"; 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { fetchLabById, uploadLabReport, getLabReportByLabAndUser } from "../store/labSlice";
+import { uploadLabReport, getLabReportByLabAndUser } from "../store/labReportSlice";
+import { fetchLabById } from "../store/labSlice";
+import { getLabResultByLabAndUser } from "../store/labResultSlice";
 import { RootState } from "../store/store";
 
 const LabPage = () => {
   const { id: labId } = useParams<{ id: string }>();
-  console.log(labId);
   const dispatch = useAppDispatch();
-  const { 
-    currentLab: lab, 
-    loading, 
-    error,
-    labResults
-  } = useAppSelector((state) => state.lab);
+
+  const { currentLab: lab, loading, error } = useAppSelector((state) => state.lab);
   const { user } = useAppSelector((state: RootState) => state.auth);
-  console.log("UserId1:", user.id);
+  const { reports } = useAppSelector((state) => state.labReport);
+  const { results } = useAppSelector((state) => state.labResult);
 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [submissionStatus, setSubmissionStatus] = useState<string | null>(null);
@@ -30,25 +28,37 @@ const LabPage = () => {
 
   useEffect(() => {
     if (user && labId) {
-      console.log("UserId:", user.id);
       dispatch(getLabReportByLabAndUser({ labId, userId: user.id }));
+      dispatch(getLabResultByLabAndUser({ labId, userId: user.id }));
     }
   }, [dispatch, labId, user]);
 
   useEffect(() => {
-    if (user && labId && labResults.length > 0) {
-      const userSubmission = labResults.find(
+    if (user && labId && results.length > 0) {
+      const userResult = results.find(
         result => result.labId === labId && result.userId === user.id
       );
       
-      if (userSubmission) {
-        setGrade(userSubmission.score ? `Оценка: ${userSubmission.score}` : "Работа проверяется");
-        if (userSubmission.submissionFileUrl) {
-          setSubmissionStatus(`Работа уже отправлена: ${userSubmission.submissionFileUrl}`);
-        }
+      if (userResult) {
+        setGrade(
+          userResult.score !== undefined && userResult.score !== null
+            ? `Оценка: ${userResult.score}`
+            : "Работа проверяется"
+        );
       }
     }
-  }, [labResults, labId, user]);
+  }, [results, labId, user]);
+
+  useEffect(() => {
+    if (user && labId && reports.length > 0) {
+      const report = reports.find(
+        r => r.labId === labId && r.userId === user.id
+      );
+      if (report) {
+        setSubmissionStatus(`Работа уже отправлена: ${report.filename}`);
+      }
+    }
+  }, [reports, labId, user]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
@@ -80,14 +90,12 @@ const LabPage = () => {
     formData.append("userId", user.id);
 
     try {
-      const result = await dispatch(uploadLabReport(formData)).unwrap();
+      await dispatch(uploadLabReport(formData)).unwrap();
       setSubmissionStatus("Работа успешно отправлена!");
       setUploadedFile(null);
-      
-      // Refresh the submission data
-      if (user && labId) {
-        await dispatch(getLabReportByLabAndUser({ labId, userId: user.id }));
-      }
+
+      await dispatch(getLabReportByLabAndUser({ labId, userId: user.id }));
+      await dispatch(getLabResultByLabAndUser({ labId, userId: user.id }));
     } catch (error) {
       console.error("Upload error:", error);
       setSubmissionStatus("Ошибка при отправке работы. Пожалуйста, попробуйте снова.");

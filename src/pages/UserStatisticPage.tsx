@@ -4,6 +4,8 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchTests } from "../store/testSlice";
 import { fetchLabs } from "../store/labSlice";
 import { getTestResultByTestAndUser } from "../store/testResultSlice";
+import { getLabReportByLabAndUser } from "../store/labReportSlice";
+import { getLabResultByLabAndUser } from "../store/labResultSlice";
 
 const UserStatisticPage: React.FC = () => {
   const { id: userId } = useParams<{ id: string }>();
@@ -12,12 +14,13 @@ const UserStatisticPage: React.FC = () => {
   // Получаем данные из хранилища
   const { tests, loading: testsLoading, error: testsError } = useAppSelector((state) => state.test);
   const { labs, loading: labsLoading, error: labsError } = useAppSelector((state) => state.lab);
-  const { testResultByTestAndUser, loading: resultsLoading, error: resultsError } = 
+  const { reports: labReports, loading: reportsLoading, error: reportsError } = useAppSelector((state) => state.labReport);
+  const { results: labResults, loading: resultsLoading, error: labResultsError } = useAppSelector((state) => state.labResult);
+  const { testResultByTestAndUser, loading: testResultsLoading, error: testResultsError } = 
     useAppSelector((state) => state.testResult);
   
-  // Состояния для лабораторных работ
+  // Состояния для ручного ввода оценок
   const [labScores, setLabScores] = useState<Record<string, number>>({});
-  const [labFiles, setLabFiles] = useState<Record<string, string>>({});
 
   // Загружаем данные при монтировании компонента
   useEffect(() => {
@@ -34,6 +37,16 @@ const UserStatisticPage: React.FC = () => {
     }
   }, [dispatch, tests, userId]);
 
+  // Загружаем отчеты и результаты по лабораторным работам
+  useEffect(() => {
+    if (labs.length > 0 && userId) {
+      labs.forEach(lab => {
+        dispatch(getLabReportByLabAndUser({ labId: lab.id, userId }));
+        dispatch(getLabResultByLabAndUser({ labId: lab.id, userId }));
+      });
+    }
+  }, [dispatch, labs, userId]);
+
   // Обработчик изменения оценки лабораторной работы
   const handleLabScoreChange = (labId: string, score: number) => {
     setLabScores(prev => ({ ...prev, [labId]: score }));
@@ -49,6 +62,16 @@ const UserStatisticPage: React.FC = () => {
         : null;
   };
 
+  // Получаем отчет по лабораторной работе
+  const getLabReport = (labId: string) => {
+    return labReports.find(report => report.labId === labId && report.userId === userId);
+  };
+
+  // Получаем результат по лабораторной работе
+  const getLabResult = (labId: string) => {
+    return labResults.find(result => result.labId === labId && result.userId === userId);
+  };
+
   // Вычисление общих баллов
   const getTotalTestsScore = () => {
     if (!tests.length || !testResultByTestAndUser) return 0;
@@ -59,20 +82,21 @@ const UserStatisticPage: React.FC = () => {
   };
 
   const getTotalLabsScore = () => {
-    return Object.values(labScores).reduce((sum, score) => sum + (score || 0), 0);
+    return labResults.reduce((sum, result) => sum + (result?.score || 0), 0) + 
+           Object.values(labScores).reduce((sum, score) => sum + (score || 0), 0);
   };
 
   const getTotalScore = () => {
     return getTotalTestsScore() + getTotalLabsScore();
   };
 
-  if (testsLoading || labsLoading || resultsLoading) {
+  if (testsLoading || labsLoading || reportsLoading || resultsLoading || testResultsLoading) {
     return <div className="text-center p-4">Загрузка данных...</div>;
   }
 
-  if (testsError || labsError || resultsError) {
+  if (testsError || labsError || reportsError || labResultsError || testResultsError) {
     return <div className="text-red-500 p-4 text-center">
-      {testsError || labsError || resultsError}
+      {testsError || labsError || reportsError || labResultsError || testResultsError}
     </div>;
   }
 
@@ -132,40 +156,49 @@ const UserStatisticPage: React.FC = () => {
           <div className="text-gray-500">Нет доступных лабораторных работ</div>
         ) : (
           <div className="space-y-4">
-            {labs.map(lab => (
-              <div key={lab.id} className="border-b pb-4">
-                <div className="font-medium">{lab.title}</div>
-                
-                <div className="mt-2">
-                  <div className="mb-2">Загруженная работа:</div>
-                  {labFiles[lab.id] ? (
-                    <a 
-                      href={labFiles[lab.id]} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Скачать работу
-                    </a>
-                  ) : (
-                    <div className="text-gray-500">Работа не загружена</div>
-                  )}
+            {labs.map(lab => {
+              const report = getLabReport(lab.id);
+              const result = getLabResult(lab.id);
+              const fileUrl = report?.filepath 
+                ? `http://localhost:4200/${report.filepath.replace(/\\/g, '/')}`
+                : null;
+
+              return (
+                <div key={lab.id} className="border-b pb-4">
+                  <div className="font-medium">{lab.title}</div>
+                  
+                  <div className="mt-2">
+                    <div className="mb-2">Загруженная работа:</div>
+                    {fileUrl ? (
+                      <a 
+                        href={fileUrl} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                        download={report?.filename}
+                      >
+                        {report?.filename || 'Скачать работу'}
+                      </a>
+                    ) : (
+                      <div className="text-gray-500">Работа не загружена</div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center mt-2">
+                    <span className="mr-2">Оценка:</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      className="w-20 border rounded px-2 py-1"
+                      value={result?.score || labScores[lab.id] || ''}
+                      onChange={(e) => handleLabScoreChange(lab.id, +e.target.value)}
+                    />
+                    <span className="text-gray-500 ml-2">/100</span>
+                  </div>
                 </div>
-                
-                <div className="flex items-center mt-2">
-                  <span className="mr-2">Оценка:</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    className="w-20 border rounded px-2 py-1"
-                    value={labScores[lab.id] || ''}
-                    onChange={(e) => handleLabScoreChange(lab.id, +e.target.value)}
-                  />
-                  <span className="text-gray-500 ml-2">/100</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             
             <div className="pt-4 border-t font-medium">
               Всего за лабораторные работы: {getTotalLabsScore()} баллов
