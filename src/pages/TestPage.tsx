@@ -16,7 +16,7 @@ const TestPage: React.FC = () => {
   } | null>(null);
 
   const dispatch = useAppDispatch();
-  const { submissionLoading, submissionError } = useAppSelector(
+  const { loading, error } = useAppSelector(
     (state) => state.test
   );
 
@@ -71,9 +71,9 @@ const handleSubmitAnswers = async () => {
       })
     ).unwrap();
 
-    if (typeof result?.totalScore === 'number') {
+    if (typeof result?.score === 'number') {
       setTestResult({
-        totalScore: result.totalScore,
+        totalScore: result.score,
         totalQuestions: questions.length,
       });
       setSubmissionState('success');
@@ -138,9 +138,9 @@ const handleSubmitAnswers = async () => {
           </div>
         )}
 
-        {submissionError && (
+        {error && (
           <div className="bg-red-100 text-red-800 p-4 rounded mb-4">
-            {submissionError}
+            {error}
           </div>
         )}
       </div>
@@ -208,14 +208,14 @@ const handleSubmitAnswers = async () => {
         <div className="mt-8 text-center">
           <button
             onClick={handleSubmitAnswers}
-            disabled={!allQuestionsAnswered || submissionLoading}
+            disabled={!allQuestionsAnswered || loading}
             className={`px-6 py-3 rounded-lg font-medium text-white ${
               allQuestionsAnswered
                 ? 'bg-amber-500 hover:bg-amber-600'
                 : 'bg-gray-400 cursor-not-allowed'
             } transition-colors`}
           >
-            {submissionLoading ? (
+            {loading ? (
               <span className="flex items-center justify-center">
                 <svg
                   className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"

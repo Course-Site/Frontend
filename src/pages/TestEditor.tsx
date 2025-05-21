@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppDispatch } from '../store/hooks'; // путь может отличаться
-import { createFullTest } from '../store/testSlice'; // импорт твоего thunk
+import { createFullTest } from '../store/testFullSlice'; // импорт твоего thunk
 import Button from '../components/Button/Button';
 //import { Answer, Question, TestEditorProps } from '../types/types';
 

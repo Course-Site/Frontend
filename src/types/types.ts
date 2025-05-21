@@ -19,7 +19,6 @@ export interface Lab {
   content: string;
 }
 
-
 export interface Test {
   id: string;
   title: string;

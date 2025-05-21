@@ -51,6 +51,7 @@ const fetchUserByToken = async (token: string): Promise<User> => {
 
   return {
     ...userData,
+    id: decoded.id,
     role: decoded.role,
     token,
   };

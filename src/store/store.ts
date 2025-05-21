@@ -4,9 +4,12 @@ import userReducer from "./userSlice";
 import topicReducer from "./topicSlice";
 import lectureReducer from "./lectureSlice";
 import labReducer from "./labSlice";
-import testReducer from "./testSlice"
-import learningReducer from "./learningSlice"
-import userTestStatisticsReducer from "./testStatistic"
+import testReducer from "./testSlice";
+import learningReducer from "./learningSlice";
+import testResultReducer from "./testResultSlice";
+import testAnswerReducer from "./testAnswerSlice";
+import testQuestionReducer from "./testQuestionSlice";
+import userTestStatisticsReducer from "./testStatistic";
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +20,9 @@ export const store = configureStore({
     lab: labReducer,
     test: testReducer,
     learning: learningReducer,
+    testResult: testResultReducer,
+    testAnswer: testAnswerReducer,
+    testQuestion: testQuestionReducer,
     userTestStatistics: userTestStatisticsReducer,
   },
 });
