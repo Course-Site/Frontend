@@ -56,7 +56,7 @@ export const getLabReportById = createAsyncThunk<
 );
 
 export const getLabReportByLabAndUser = createAsyncThunk<
-  LabReport,
+  LabReport[], // Теперь ожидаем массив отчетов
   { labId: string; userId: string },
   { rejectValue: string }
 >(
@@ -64,14 +64,17 @@ export const getLabReportByLabAndUser = createAsyncThunk<
   async ({ labId, userId }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:4200/api/v1/lab-reports/GetByLabAndUser?labId=${labId}&userId=${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const url = `http://localhost:4200/api/v1/lab-reports/GetByLabAndUser?labId=${labId}&userId=${userId}`;
+      
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Ошибка получения отчета");
       }
+      
       return await response.json();
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
@@ -143,14 +146,12 @@ const labReportSlice = createSlice({
         state.error = null;
       })
       .addCase(getLabReportByLabAndUser.fulfilled, (state, action) => {
-        const index = state.reports.findIndex(r => 
-          r.labId === action.payload.labId && r.userId === action.payload.userId
+        // Удаляем все отчеты для этой labId и userId
+        state.reports = state.reports.filter(r => 
+          !(r.labId === action.meta.arg.labId && r.userId === action.meta.arg.userId)
         );
-        if (index !== -1) {
-          state.reports[index] = action.payload;
-        } else {
-          state.reports.push(action.payload);
-        }
+        // Добавляем новые отчеты
+        state.reports.push(...action.payload);
         state.loading = false;
       })
       .addCase(getLabReportByLabAndUser.rejected, (state, action) => {

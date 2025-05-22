@@ -18,12 +18,16 @@ const UserStatisticPage: React.FC = () => {
   const { results: labResults, loading: resultsLoading, error: labResultsError } = useAppSelector((state) => state.labResult);
   const { testResultByTestAndUser, loading: testResultsLoading, error: testResultsError } = 
     useAppSelector((state) => state.testResult);
+
+  console.log('Current labReports:', labReports); // Лог текущих отчетов
+  console.log('Current labResults:', labResults); // Лог текущих результатов
   
   // Состояния для ручного ввода оценок
   const [labScores, setLabScores] = useState<Record<string, number>>({});
 
   // Загружаем данные при монтировании компонента
   useEffect(() => {
+    console.log('Fetching tests and labs...'); // Лог начала загрузки
     dispatch(fetchTests());
     dispatch(fetchLabs());
   }, [dispatch, userId]);
@@ -31,28 +35,49 @@ const UserStatisticPage: React.FC = () => {
   // Загружаем результаты тестов для каждого теста
   useEffect(() => {
     if (tests.length > 0 && userId) {
+      console.log('Fetching test results for tests:', tests.map(t => t.id)); // Лог тестов
       tests.forEach(test => {
         dispatch(getTestResultByTestAndUser({ testId: test.id, userId }));
       });
     }
   }, [dispatch, tests, userId]);
 
-  // Загружаем отчеты и результаты по лабораторным работам
   useEffect(() => {
-    if (labs.length > 0 && userId) {
-      labs.forEach(lab => {
-        dispatch(getLabReportByLabAndUser({ labId: lab.id, userId }));
-        dispatch(getLabResultByLabAndUser({ labId: lab.id, userId }));
-      });
-    }
-  }, [dispatch, labs, userId]);
+  if (!userId || labs.length === 0) return;
 
-  // Обработчик изменения оценки лабораторной работы
+  const fetchLabData = async () => {
+    try {
+      const reportPromises = labs.map(async (lab) => {
+        try {
+          const reportResult = await dispatch(getLabReportByLabAndUser({ labId: lab.id, userId })).unwrap();
+          console.log(`Fetched report for lab ${lab.id}`, reportResult);
+        } catch (err) {
+          console.error(`Error fetching report for lab ${lab.id}:`, err);
+        }
+
+        try {
+          const result = await dispatch(getLabResultByLabAndUser({ labId: lab.id, userId })).unwrap();
+          console.log(`Fetched result for lab ${lab.id}`, result);
+        } catch (err) {
+          console.error(`Error fetching result for lab ${lab.id}:`, err);
+        }
+      });
+
+      await Promise.all(reportPromises);
+    } catch (err) {
+      console.error('Unexpected error fetching lab data:', err);
+    }
+  };
+
+  fetchLabData();
+}, [dispatch, labs, userId]);
+
+
+  // Остальные функции без изменений
   const handleLabScoreChange = (labId: string, score: number) => {
     setLabScores(prev => ({ ...prev, [labId]: score }));
   };
 
-  // Получаем результат теста по ID теста
   const getTestResult = (testId: string) => {
     if (!testResultByTestAndUser) return null;
     return Array.isArray(testResultByTestAndUser) 
@@ -62,17 +87,16 @@ const UserStatisticPage: React.FC = () => {
         : null;
   };
 
-  // Получаем отчет по лабораторной работе
   const getLabReport = (labId: string) => {
-    return labReports.find(report => report.labId === labId && report.userId === userId);
+    const reports = labReports.filter(report => report.labId === labId && report.userId === userId);
+    console.log(`Reports for lab ${labId}:`, reports); // Лог отчетов для конкретной лабораторной
+    return reports[0]; // Возвращаем первый отчет (или undefined)
   };
 
-  // Получаем результат по лабораторной работе
   const getLabResult = (labId: string) => {
     return labResults.find(result => result.labId === labId && result.userId === userId);
   };
 
-  // Вычисление общих баллов
   const getTotalTestsScore = () => {
     if (!tests.length || !testResultByTestAndUser) return 0;
     return tests.reduce((sum, test) => {
@@ -162,6 +186,8 @@ const UserStatisticPage: React.FC = () => {
               const fileUrl = report?.filepath 
                 ? `http://localhost:4200/${report.filepath.replace(/\\/g, '/')}`
                 : null;
+
+              console.log(`Rendering lab ${lab.id} with report:`, report); // Лог перед рендерингом
 
               return (
                 <div key={lab.id} className="border-b pb-4">
