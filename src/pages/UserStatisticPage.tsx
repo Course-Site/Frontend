@@ -36,7 +36,7 @@ const UserStatisticPage: React.FC = () => {
   } = useAppSelector((state) => state.testResult);
 
   // Локальное состояние для редактируемых оценок
-  const [editableScores, setEditableScores] = useState<Record<string, number>>({});
+  const [editableScores, setEditableScores] = useState<Record<string, number | ''>>({});
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
 
   // Загрузка данных при монтировании
@@ -68,21 +68,37 @@ const UserStatisticPage: React.FC = () => {
 
   // Инициализация редактируемых оценок при получении результатов
   useEffect(() => {
-    const initialScores: Record<string, number> = {};
+    const initialScores: Record<string, number | ''> = {};
     labResults.forEach(result => {
-      if (result.userId === userId) {
+      if (result.userId === userId && result.score !== undefined) {
         initialScores[result.labId] = result.score;
       }
     });
     setEditableScores(initialScores);
   }, [labResults, userId]);
 
+  // Получение максимального балла для лабораторной работы
+  const getMaxScoreForLab = (labId: string) => {
+    const lab = labs.find(l => l.id === labId);
+    return lab?.maxScore || 100; // Значение по умолчанию, если maxScore не указан
+  };
+
   // Обработчик изменения оценки
   const handleScoreChange = (labId: string, value: string) => {
-    const score = parseInt(value) || 0;
+    if (value === '') {
+      setEditableScores(prev => ({ ...prev, [labId]: '' }));
+      return;
+    }
+
+    const score = parseInt(value);
+    if (isNaN(score)) return;
+
+    const maxScore = getMaxScoreForLab(labId);
+    const validatedScore = Math.min(Math.max(score, 0), maxScore);
+
     setEditableScores(prev => ({
       ...prev,
-      [labId]: Math.min(Math.max(score, 0), 100) // Ограничение от 0 до 100
+      [labId]: validatedScore
     }));
   };
 
@@ -90,8 +106,8 @@ const UserStatisticPage: React.FC = () => {
   const saveLabScore = async (labId: string) => {
     if (!userId) return;
 
-    const score = editableScores[labId];
-    if (score === undefined) return;
+    const scoreValue = editableScores[labId];
+    if (scoreValue === '') return;
 
     setIsSaving(prev => ({ ...prev, [labId]: true }));
 
@@ -103,18 +119,17 @@ const UserStatisticPage: React.FC = () => {
       if (existingResult) {
         await dispatch(updateLabResult({
           id: existingResult.id,
-          score
+          score: scoreValue as number
         })).unwrap();
       } else {
         await dispatch(createLabResult({
           labId,
           userId,
-          score
+          score: scoreValue as number
         })).unwrap();
       }
     } catch (error) {
       console.error("Ошибка сохранения оценки:", error);
-      // Можно добавить уведомление об ошибке
     } finally {
       setIsSaving(prev => ({ ...prev, [labId]: false }));
     }
@@ -248,12 +263,16 @@ const UserStatisticPage: React.FC = () => {
               const fileUrl = report?.filepath
                 ? `http://localhost:4200/${report.filepath.replace(/\\/g, "/")}`
                 : null;
-              const currentScore = editableScores[lab.id] ?? result?.score ?? 0;
+              const currentScore = editableScores[lab.id] ?? (result?.score !== undefined ? result.score : '');
+              const maxScore = getMaxScoreForLab(lab.id);
               const isLabSaving = isSaving[lab.id] || false;
 
               return (
                 <div key={lab.id} className="border-b pb-4">
                   <div className="font-medium">{lab.title}</div>
+                  {lab.description && (
+                    <div className="text-gray-600 mt-1">{lab.description}</div>
+                  )}
 
                   <div className="mt-2">
                     <div className="mb-2">Загруженная работа:</div>
@@ -277,25 +296,31 @@ const UserStatisticPage: React.FC = () => {
                     <input
                       type="number"
                       min={0}
-                      max={100}
+                      max={maxScore}
                       className="w-20 border rounded px-2 py-1 mr-2"
-                      value={currentScore}
+                      value={currentScore === '' ? '' : currentScore}
                       onChange={(e) => handleScoreChange(lab.id, e.target.value)}
+                      onBlur={() => {
+                        if (editableScores[lab.id] === '') {
+                          const prevValue = result?.score ?? 0;
+                          setEditableScores(prev => ({ ...prev, [lab.id]: prevValue }));
+                        }
+                      }}
                       disabled={isLabSaving}
+                      placeholder={`0-${maxScore}`}
                     />
-                    <span className="text-gray-500 mr-2">/100</span>
+                    <span className="text-gray-500 mr-2">/{maxScore}</span>
                     <button
                       onClick={() => saveLabScore(lab.id)}
-                      disabled={isLabSaving}
+                      disabled={isLabSaving || editableScores[lab.id] === ''}
                       className={`px-3 py-1 rounded text-white ${
-                        isLabSaving ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+                        isLabSaving || editableScores[lab.id] === '' 
+                          ? 'bg-gray-400' 
+                          : 'bg-blue-600 hover:bg-blue-700'
                       }`}
                     >
                       {isLabSaving ? 'Сохранение...' : 'Сохранить'}
                     </button>
-                    {isLabSaving && (
-                      <span className="ml-2 text-gray-500">Сохранение...</span>
-                    )}
                   </div>
                 </div>
               );
