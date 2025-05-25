@@ -106,6 +106,49 @@ export const deleteLabReport = createAsyncThunk<
   }
 );
 
+// Загрузка файла
+export const downloadLabReport = createAsyncThunk<
+  void,
+  { labId: string; userId: string; filename: string },
+  { rejectValue: string }
+>(
+  "labReport/download",
+  async ({ labId, userId, filename }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:4200/api/v1/lab-reports/download?labId=${labId}&userId=${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Ошибка загрузки отчета");
+      }
+
+      // Создаем blob из ответа
+      const blob = await response.blob();
+      // Создаем URL для blob
+      const url = window.URL.createObjectURL(blob);
+      // Создаем временную ссылку для скачивания
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "lab_report";
+      document.body.appendChild(a);
+      a.click();
+      // Очищаем память
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
 const labReportSlice = createSlice({
   name: "labReport",
   initialState,
@@ -160,7 +203,18 @@ const labReportSlice = createSlice({
       })
       .addCase(deleteLabReport.fulfilled, (state, action) => {
         state.reports = state.reports.filter(report => report.id !== action.payload);
-      });
+      })
+      .addCase(downloadLabReport.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(downloadLabReport.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload || "Ошибка скачивания отчета";
+    })
+    .addCase(downloadLabReport.fulfilled, (state) => {
+      state.loading = false;
+    });
   },
 });
 

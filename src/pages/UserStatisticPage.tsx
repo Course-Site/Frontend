@@ -5,6 +5,8 @@ import { fetchTests } from "../store/testSlice";
 import { fetchLabs } from "../store/labSlice";
 import { getTestResultByTestAndUser } from "../store/testResultSlice";
 import { getLabReportByLabAndUser } from "../store/labReportSlice";
+import { downloadLabReport } from "../store/labReportSlice";
+
 import {
   getLabResultByLabAndUser,
   createLabResult,
@@ -65,6 +67,21 @@ const UserStatisticPage: React.FC = () => {
       });
     }
   }, [dispatch, labs, userId]);
+
+  //Загрузка отчёта
+  const handleDownloadReport = async (labId: string, userId: string | undefined, filename: string) => {
+    if (!userId) {
+      console.error("User ID is undefined");
+      return;
+    }
+    
+    try {
+      await dispatch(downloadLabReport({ labId, userId, filename })).unwrap();
+    } catch (error) {
+      console.error("Ошибка при скачивании файла:", error);
+    }
+  };
+
 
   // Инициализация редактируемых оценок при получении результатов
   useEffect(() => {
@@ -260,9 +277,6 @@ const UserStatisticPage: React.FC = () => {
             {labs.map((lab) => {
               const report = getLabReport(lab.id);
               const result = getLabResult(lab.id);
-              const fileUrl = report?.filepath
-                ? `http://localhost:4200/${report.filepath.replace(/\\/g, "/")}`
-                : null;
               const currentScore = editableScores[lab.id] ?? (result?.score !== undefined ? result.score : '');
               const maxScore = getMaxScoreForLab(lab.id);
               const isLabSaving = isSaving[lab.id] || false;
@@ -276,20 +290,18 @@ const UserStatisticPage: React.FC = () => {
 
                   <div className="mt-2">
                     <div className="mb-2">Загруженная работа:</div>
-                    {fileUrl ? (
-                      <a
-                        href={fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                        download={report?.filename}
+                    {report ? (
+                      <button
+                        onClick={() => handleDownloadReport(lab.id, userId, report.filename)}
+                        className="text-blue-600 underline hover:text-blue-800 cursor-pointer"
                       >
-                        {report?.filename || "Скачать работу"}
-                      </a>
+                        {report.filename || "Скачать работу"}
+                      </button>
                     ) : (
                       <div className="text-gray-500">Работа не загружена</div>
                     )}
                   </div>
+
 
                   <div className="flex items-center mt-2">
                     <span className="mr-2">Оценка:</span>
