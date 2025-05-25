@@ -12,6 +12,7 @@ import testResultReducer from "./testResultSlice";
 import testAnswerReducer from "./testAnswerSlice";
 import testQuestionReducer from "./testQuestionSlice";
 import userTestStatisticsReducer from "./testStatistic";
+import userStatisticsReducer from "./userStatisticSlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     testAnswer: testAnswerReducer,
     testQuestion: testQuestionReducer,
     userTestStatistics: userTestStatisticsReducer,
+    userStatistics: userStatisticsReducer,
   },
 });
 

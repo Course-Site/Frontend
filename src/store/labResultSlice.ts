@@ -36,7 +36,7 @@ export const createLabResult = createAsyncThunk<
 );
 
 export const getLabResultByLabAndUser = createAsyncThunk<
-  LabResult,
+  LabResult | null,
   { labId: string; userId: string },
   { rejectValue: string }
 >(
@@ -46,13 +46,26 @@ export const getLabResultByLabAndUser = createAsyncThunk<
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:4200/api/v1/labresult/GetByLabAndUser?labId=${labId}&userId=${userId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
       );
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Ошибка получения результата");
       }
-      return await response.json();
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        return data[0];
+      }
+
+      return null; // если массив пуст
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
     }
@@ -110,13 +123,16 @@ const labResultSlice = createSlice({
         state.error = null;
       })
       .addCase(getLabResultByLabAndUser.fulfilled, (state, action) => {
-        const index = state.results.findIndex(r => 
-          r.labId === action.payload.labId && r.userId === action.payload.userId
-        );
-        if (index !== -1) {
-          state.results[index] = action.payload;
-        } else {
-          state.results.push(action.payload);
+        const result = action.payload;
+        if (result) {
+          const index = state.results.findIndex(
+            (r) => r.labId === result.labId && r.userId === result.userId
+          );
+          if (index !== -1) {
+            state.results[index] = result;
+          } else {
+            state.results.push(result);
+          }
         }
         state.loading = false;
       })
