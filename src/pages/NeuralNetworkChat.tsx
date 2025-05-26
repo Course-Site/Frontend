@@ -84,7 +84,7 @@ const NeuralNetworkChat = () => {
   return (
     <div className="min-h-screen mb-10 flex items-center justify-center p-4">
       <div className="max-w-3xl w-full bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="bg-blue-700 text-white p-4 text-center text-2xl">
+        <div className="bg-amber-500 text-white p-4 text-center text-2xl">
           Чат с GigaChat
         </div>
         
@@ -99,7 +99,7 @@ const NeuralNetworkChat = () => {
             <div 
               key={index}
               className={`max-w-[70%] px-4 py-3 rounded-2xl ${message.isUser 
-                ? 'bg-blue-700 text-white self-end rounded-br-md' 
+                ? 'bg-amber-500 text-white self-end rounded-br-md' 
                 : 'bg-gray-200 text-black self-start rounded-bl-md'}`}
             >
               {message.content}
@@ -126,7 +126,7 @@ const NeuralNetworkChat = () => {
             <button
               type="submit"
               disabled={!inputValue.trim() || isTyping}
-              className="ml-3 px-5 py-2 bg-blue-700 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-800 transition-colors"
+              className="ml-3 px-5 py-2 bg-amber-500 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-800 transition-colors"
             >
               {isTyping ? 'Отправка...' : 'Отправить'}
             </button>

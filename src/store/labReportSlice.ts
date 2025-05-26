@@ -16,7 +16,7 @@ export const uploadLabReport = createAsyncThunk<
   async (formData, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4200/api/v1/lab-reports/upload", {
+      const response = await fetch("http://localhost:4200/api/v1/lab_report/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -41,7 +41,7 @@ export const getLabReportById = createAsyncThunk<
   async (id, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4200/api/v1/lab-reports/findById/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/lab_report/findById/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) {
@@ -64,7 +64,7 @@ export const getLabReportByLabAndUser = createAsyncThunk<
   async ({ labId, userId }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const url = `http://localhost:4200/api/v1/lab-reports/GetByLabAndUser?labId=${labId}&userId=${userId}`;
+      const url = `http://localhost:4200/api/v1/lab_report/GetByLabAndUser?labId=${labId}&userId=${userId}`;
       
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
@@ -91,7 +91,7 @@ export const deleteLabReport = createAsyncThunk<
   async (id, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4200/api/v1/lab-reports/delete/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/lab_report/delete/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -117,7 +117,7 @@ export const downloadLabReport = createAsyncThunk<
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:4200/api/v1/lab-reports/download?labId=${labId}&userId=${userId}`,
+        `http://localhost:4200/api/v1/lab_report/download?labId=${labId}&userId=${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

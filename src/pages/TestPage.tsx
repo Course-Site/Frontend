@@ -2,7 +2,7 @@ import React, { useState} from 'react';
 import { useParams } from 'react-router-dom';
 import { useTestData } from '../hooks/useTestData';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { submitTestAnswers } from '../store/testSlice';
+import { submitTestAnswers } from '../store/testResultSlice';
 
 const TestPage: React.FC = () => {
   const { testId } = useParams<{ testId: string }>();
@@ -71,13 +71,16 @@ const handleSubmitAnswers = async () => {
       })
     ).unwrap();
 
-    if (typeof result?.score === 'number') {
+    if (typeof result?.totalScore === 'number') {
       setTestResult({
-        score: result.score,
+        score: result.totalScore,
         totalQuestions: questions.length,
       });
+      console.log(result.score);
       setSubmissionState('success');
     } else {
+      console.log(result.score);
+      console.log("result.totalScore: ", result.totalScore);
       console.error('Не получен score в ответе:', result);
       setSubmissionState('error');
     }

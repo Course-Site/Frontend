@@ -3,8 +3,8 @@ import { TestResult } from "../types/types";
 import { getAuthHeaders } from "./apiUtils";
 
 interface TestResultState {
-  results: TestResult[];
-  testResultByTestAndUser: TestResult | null;
+  resultsByTestId: Record<string, TestResult[]>;
+  testResultsByTestAndUser: Record<string, TestResult>; // Изменено на словарь
   submissionLoading: boolean;
   submissionError: string | null;
   loading: boolean;
@@ -12,23 +12,24 @@ interface TestResultState {
 }
 
 const initialState: TestResultState = {
-  results: [],
-  testResultByTestAndUser: null,
+  resultsByTestId: {},
+  testResultsByTestAndUser: {}, // Инициализируем как пустой объект
   submissionLoading: false,
   submissionError: null,
   loading: false,
   error: null,
 };
 
+// Thunks (оставляем без изменений)
 export const createTestResult = createAsyncThunk(
   "test/createTestResult",
   async (data, { rejectWithValue }) => {
     try {
-      const res = await fetch("http://localhost:4200/api/v1/testResult/create", {
+      const res = await fetch("http://localhost:4200/api/v1/test_result/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify(data),
       });
@@ -39,12 +40,12 @@ export const createTestResult = createAsyncThunk(
     }
   }
 );
-// testResult/getAll
+
 export const fetchAllTestResults = createAsyncThunk<TestResult[], void, { rejectValue: string }>(
   "test/fetchAllTestResults",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4200/api/v1/testResult/getAll", {
+      const response = await fetch("http://localhost:4200/api/v1/test_result/getAll", {
         headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error("Ошибка при получении результатов тестов");
@@ -54,12 +55,12 @@ export const fetchAllTestResults = createAsyncThunk<TestResult[], void, { reject
     }
   }
 );
-// testResult/findById/${id}
+
 export const fetchTestResultById = createAsyncThunk<TestResult, string, { rejectValue: string }>(
   "test/fetchTestResultById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/testResult/findById/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test_result/findById/${id}`, {
         headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error("Ошибка при получении результата");
@@ -69,12 +70,12 @@ export const fetchTestResultById = createAsyncThunk<TestResult, string, { reject
     }
   }
 );
-// testResult/${id} (PUT)
+
 export const updateTestResult = createAsyncThunk<TestResult, TestResult, { rejectValue: string }>(
   "test/updateTestResult",
   async (result, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/testResult/${result.id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test_result/${result.id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(result),
@@ -86,12 +87,12 @@ export const updateTestResult = createAsyncThunk<TestResult, TestResult, { rejec
     }
   }
 );
-// testResult/delete/${id}
+
 export const deleteTestResult = createAsyncThunk<string, string, { rejectValue: string }>(
   "test/deleteTestResult",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/testResult/delete/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test_result/delete/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });
@@ -105,34 +106,39 @@ export const deleteTestResult = createAsyncThunk<string, string, { rejectValue: 
 
 export const getTestResultByTestAndUser = createAsyncThunk(
   'test/getTestResultByTestAndUser',
-  async ({ testId, userId }: { testId: string; userId: string }) => {
-    const res = await fetch(
-      `http://localhost:4200/api/v1/testresult/GetByTestAndUser?testId=${testId}&userId=${userId}`,
-      {
-        headers: getAuthHeaders(),
-      }
-    );
-    return await res.json();
+  async ({ testId, userId }: { testId: string; userId: string }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(
+        `http://localhost:4200/api/v1/test_result/GetByTestAndUser?testId=${testId}&userId=${userId}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to fetch test result');
+      //console.log(res.json());
+      return { testId, result: await res.json() };
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
   }
 );
 
 export const submitTestAnswers = createAsyncThunk(
   'test/submitAnswers',
-  async (payload: { 
-    testId: string; 
-    answers: Array<{ 
-      questionId: string; 
-      selectedAnswerIds: string[] 
-    }> 
-  }, { rejectWithValue }) => {
+  async (
+    payload: {
+      testId: string;
+      answers: Array<{ questionId: string; selectedAnswerIds: string[] }>;
+    },
+    { rejectWithValue }
+  ) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('User not authorized');
 
-      // Убедимся, что testId в правильном формате
       const cleanTestId = payload.testId.replace(/['"]/g, '').trim();
-      
-      const response = await fetch('http://localhost:4200/api/v1/test-evaluate/submit', {
+
+      const response = await fetch('http://localhost:4200/api/v1/test_evaluate/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,66 +146,103 @@ export const submitTestAnswers = createAsyncThunk(
         },
         body: JSON.stringify({
           ...payload,
-          testId: cleanTestId // Используем очищенный testId
+          testId: cleanTestId
         })
       });
 
       if (!response.ok) {
         const error = await response.json();
-        console.error('Backend error:', error); // Логируем ошибку с бэкенда
         throw new Error(error.message || 'Failed to submit answers');
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Submission error:', error); // Логируем ошибку
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }
   }
 );
 
+// Slice
 const testResultSlice = createSlice({
   name: "testResult",
   initialState,
-  reducers: {},
+  reducers: {
+    resetTestResultsByUser(state) {
+      state.testResultsByTestAndUser = {};
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAllTestResults.fulfilled, (state, action) => {
-        state.results = action.payload;
+        state.resultsByTestId = {};
+        action.payload.forEach((result) => {
+          if (!state.resultsByTestId[result.testId]) {
+            state.resultsByTestId[result.testId] = [];
+          }
+          state.resultsByTestId[result.testId].push(result);
+        });
       })
       .addCase(fetchTestResultById.fulfilled, (state, action) => {
-        const idx = state.results.findIndex(r => r.id === action.payload.id);
-        if (idx !== -1) {
-          state.results[idx] = action.payload;
+        const result = action.payload;
+        const list = state.resultsByTestId[result.testId] || [];
+        const existingIndex = list.findIndex(r => r.id === result.id);
+        if (existingIndex !== -1) {
+          list[existingIndex] = result;
         } else {
-          state.results.push(action.payload);
+          list.push(result);
         }
+        state.resultsByTestId[result.testId] = list;
       })
       .addCase(createTestResult.fulfilled, (state, action) => {
-        state.results.push(action.payload);
+        const result = action.payload;
+        if (!state.resultsByTestId[result.testId]) {
+          state.resultsByTestId[result.testId] = [];
+        }
+        state.resultsByTestId[result.testId].push(result);
       })
       .addCase(updateTestResult.fulfilled, (state, action) => {
-        const idx = state.results.findIndex(r => r.id === action.payload.id);
-        if (idx !== -1) state.results[idx] = action.payload;
+        const result = action.payload;
+        const list = state.resultsByTestId[result.testId];
+        if (list) {
+          const idx = list.findIndex(r => r.id === result.id);
+          if (idx !== -1) {
+            list[idx] = result;
+          }
+        }
       })
       .addCase(deleteTestResult.fulfilled, (state, action) => {
-        state.results = state.results.filter(r => r.id !== action.payload);
+        const idToDelete = action.payload;
+        for (const testId in state.resultsByTestId) {
+          state.resultsByTestId[testId] = state.resultsByTestId[testId].filter(r => r.id !== idToDelete);
+        }
       })
       .addCase(submitTestAnswers.pending, (state) => {
         state.submissionLoading = true;
         state.submissionError = null;
       })
-      .addCase(submitTestAnswers.fulfilled, (state) => {
+      .addCase(submitTestAnswers.fulfilled, (state, action) => {
         state.submissionLoading = false;
+        // Обновляем результат теста после успешной отправки ответов
+        if (action.payload?.testId) {
+          state.testResultsByTestAndUser[action.payload.testId] = action.payload;
+        }
       })
       .addCase(submitTestAnswers.rejected, (state, action) => {
         state.submissionLoading = false;
         state.submissionError = action.payload as string;
       })
       .addCase(getTestResultByTestAndUser.fulfilled, (state, action) => {
-        state.testResultByTestAndUser = action.payload;
+        const { testId, result } = action.payload;
+        if (testId && result) {
+          state.testResultsByTestAndUser[testId] = result;
+        }
+      })
+      .addCase(getTestResultByTestAndUser.rejected, (_, action) => {
+        // Можно добавить обработку ошибок, если нужно
+        console.error('Failed to fetch test result:', action.payload);
       });
   },
 });
 
 export default testResultSlice.reducer;
+export const { resetTestResultsByUser } = testResultSlice.actions;

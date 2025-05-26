@@ -1,4 +1,3 @@
-import React from "react";
 import { Tooltip } from "react-tooltip";
 import 'react-tooltip/dist/react-tooltip.css';
 import corgiImage from "../../assets/images/corgi.png";

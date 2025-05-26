@@ -16,7 +16,7 @@ export const createLabResult = createAsyncThunk<
   async ({ labId, userId, score }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:4200/api/v1/labresult/create", {
+      const response = await fetch("http://localhost:4200/api/v1/lab_result/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -45,7 +45,7 @@ export const getLabResultByLabAndUser = createAsyncThunk<
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:4200/api/v1/labresult/GetByLabAndUser?labId=${labId}&userId=${userId}`,
+        `http://localhost:4200/api/v1/lab_result/GetByLabAndUser?labId=${labId}&userId=${userId}`,
         {
           method: "GET",
           headers: {
@@ -81,7 +81,7 @@ export const updateLabResult = createAsyncThunk<
   async ({ id, score }, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:4200/api/v1/labresult/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/lab_result/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

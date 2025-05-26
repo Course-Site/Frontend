@@ -14,8 +14,13 @@ const UserStats: React.FC = () => {
 
   const { tests } = useAppSelector((state) => state.test);
   const { labs } = useAppSelector((state) => state.lab);
-  const { results: testResults } = useAppSelector((state) => state.testResult);
   const { results: labResults } = useAppSelector((state) => state.labResult);
+  const { testResultsByTestAndUser } = useAppSelector((state) => state.testResult);
+
+  // Очистка результатов при смене пользователя
+  useEffect(() => {
+    dispatch({ type: "testResult/resetTestResultsByUser" });
+  }, [userId, dispatch]);
 
   useEffect(() => {
     if (userId) {
@@ -24,14 +29,18 @@ const UserStats: React.FC = () => {
     }
   }, [dispatch, userId]);
 
+  // Загрузка результатов тестов
   useEffect(() => {
-    if (userId && tests.length > 0) {
+    if (tests.length > 0 && userId) {
       tests.forEach((test) => {
-        dispatch(getTestResultByTestAndUser({ testId: test.id, userId }));
+        if (!testResultsByTestAndUser[test.id]) {
+          dispatch(getTestResultByTestAndUser({ testId: test.id, userId }));
+        }
       });
     }
-  }, [dispatch, tests, userId]);
+  }, [dispatch, tests, userId, testResultsByTestAndUser]);
 
+  // Загрузка результатов лабораторных
   useEffect(() => {
     if (userId && labs.length > 0) {
       labs.forEach((lab) => {
@@ -40,14 +49,16 @@ const UserStats: React.FC = () => {
     }
   }, [dispatch, labs, userId]);
 
-  const getTestScore = (testId: string) => {
-    const result = Array.isArray(testResults)
-      ? testResults.find((r) => r.testId === testId && r.userId === userId)
-      : testResults?.testId === testId
-      ? testResults
-      : null;
+  const getTestResult = (testId: string) => {
+    const resultList = testResultsByTestAndUser[testId];
+    if (Array.isArray(resultList)) return resultList[0] || null;
+    return resultList || null;
+  };
 
-    return result?.score ?? 0;
+  const getTestScore = (testId: string) => {
+    const result = getTestResult(testId);
+    // Учитываем поле totalScore или score
+    return result?.totalScore ?? result?.score ?? 0;
   };
 
   const getLabScore = (labId: string) => {
@@ -57,11 +68,10 @@ const UserStats: React.FC = () => {
 
   const totalTestScore = tests.reduce((sum, test) => sum + getTestScore(test.id), 0);
   const totalLabScore = labs.reduce((sum, lab) => sum + getLabScore(lab.id), 0);
-
   const totalScore = totalTestScore + totalLabScore;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded-lg">
+    <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded-lg mb-10">
       <h2 className="text-2xl font-bold mb-4">Ваша статистика</h2>
 
       <div className="mb-6 text-lg">
@@ -70,26 +80,41 @@ const UserStats: React.FC = () => {
           <span className="font-bold">{totalScore}</span>
         </p>
         <p>
-          <span className="font-medium">Баллы за тесты:</span>{" "}
-          {totalTestScore}
+          <span className="font-medium">Баллы за тесты:</span> {totalTestScore}
         </p>
         <p>
-          <span className="font-medium">Баллы за лабораторные:</span>{" "}
-          {totalLabScore}
+          <span className="font-medium">Баллы за лабораторные:</span> {totalLabScore}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="text-xl font-semibold mb-2">Тесты</h3>
-          <ul className="space-y-2">
-            {tests.map((test) => (
-              <li key={test.id} className="flex justify-between border-b pb-1">
-                <span>{test.title}</span>
-                <span className="font-bold">{getTestScore(test.id)}</span>
-              </li>
-            ))}
-          </ul>
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+          <h2 className="text-xl font-semibold mb-4">Тесты</h2>
+          {tests.length === 0 ? (
+            <div className="text-gray-500">Нет доступных тестов</div>
+          ) : (
+            <div className="space-y-4">
+              {tests.map((test) => {
+                const result = getTestResult(test.id);
+                return (
+                  <div key={test.id} className="border-b pb-4">
+                    <div className="font-medium">{test.title}</div>
+                    <div className="mt-2">
+                      <span className="mr-2">Баллы:</span>
+                      <span className="font-bold">
+                        {result ? getTestScore(test.id) : "Не пройден"}
+                      </span>
+                    </div>
+                    {result?.completedAt && (
+                      <div className="text-sm text-gray-500 mt-1">
+                        Пройден: {new Date(result.completedAt).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div>

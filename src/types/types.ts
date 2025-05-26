@@ -45,6 +45,8 @@ export interface TestResult {
   testId: string;
   userId: string;
   score: number;
+  totalScore: number;
+  completedAt: string;
   testResultByTestAndUser: number;
 }
 

@@ -18,7 +18,7 @@ export const fetchAllTestAnswers = createAsyncThunk<Answer[], void, { rejectValu
   "testAnswer/fetchAllAnswers",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4200/api/v1/testAnswer/getAll", {
+      const response = await fetch("http://localhost:4200/api/v1/test_answer/getAll", {
         headers: getAuthHeaders(),
       });
       const result = await response.json();
@@ -34,7 +34,7 @@ export const createAnswers = createAsyncThunk<void, { questionId: string; answer
   "testAnswer/createAnswers",
   async ({ questionId, answers }, { rejectWithValue }) => {
     try {
-      const response = await fetch("http://localhost:4200/api/v1/testAnswer/create", {
+      const response = await fetch("http://localhost:4200/api/v1/test_answer/create", {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({ questionId, answers }),
@@ -53,7 +53,7 @@ export const fetchTestAnswerById = createAsyncThunk<Answer, string, { rejectValu
   "testAnswer/fetchTestAnswerById",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/testAnswer/findById/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test_answer/findById/${id}`, {
         headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error("Ошибка при загрузке ответа");
@@ -68,7 +68,7 @@ export const updateAnswer = createAsyncThunk<Answer, Answer, { rejectValue: stri
   "testAnswer/updateAnswer",
   async (answer, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/testAnswer/${answer.id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test_answer/${answer.id}`, {
         method: "PUT",
         headers: getAuthHeaders(),
         body: JSON.stringify(answer),
@@ -85,7 +85,7 @@ export const deleteTestAnswer = createAsyncThunk<string, string, { rejectValue: 
   "testAnswer/deleteTestAnswer",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`http://localhost:4200/api/v1/testAnswer/delete/${id}`, {
+      const response = await fetch(`http://localhost:4200/api/v1/test_answer/delete/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });

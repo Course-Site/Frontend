@@ -6,7 +6,6 @@ import { fetchLabs } from "../store/labSlice";
 import { getTestResultByTestAndUser } from "../store/testResultSlice";
 import { getLabReportByLabAndUser } from "../store/labReportSlice";
 import { downloadLabReport } from "../store/labReportSlice";
-
 import {
   getLabResultByLabAndUser,
   createLabResult,
@@ -32,7 +31,7 @@ const UserStatisticPage: React.FC = () => {
     error: labResultsError,
   } = useAppSelector((state) => state.labResult);
   const {
-    testResultByTestAndUser,
+    testResultsByTestAndUser,
     loading: testResultsLoading,
     error: testResultsError,
   } = useAppSelector((state) => state.testResult);
@@ -41,9 +40,14 @@ const UserStatisticPage: React.FC = () => {
   const [editableScores, setEditableScores] = useState<Record<string, number | ''>>({});
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
 
+  useEffect(() => {
+    // Очистка предыдущих результатов тестов при смене пользователя
+    dispatch({ type: 'testResult/resetTestResultsByUser' });
+  }, [userId, dispatch]);
   // Загрузка данных при монтировании
   useEffect(() => {
     if (userId) {
+      console.log("Загрузка тестов и лабораторных для пользователя:", userId);
       dispatch(fetchTests());
       dispatch(fetchLabs());
     }
@@ -53,10 +57,17 @@ const UserStatisticPage: React.FC = () => {
   useEffect(() => {
     if (tests.length > 0 && userId) {
       tests.forEach((test) => {
-        dispatch(getTestResultByTestAndUser({ testId: test.id, userId }));
+        // Загружаем только если результат еще не загружен
+        if (!testResultsByTestAndUser[test.id]) {
+          console.log(`Запрос результата теста ${test.id} для пользователя ${userId}`);
+          dispatch(getTestResultByTestAndUser({ testId: test.id, userId }));
+        }
+        else {
+          console.log(`Результат теста ${test.id} уже загружен`);
+        }
       });
     }
-  }, [dispatch, tests, userId]);
+  }, [dispatch, tests, userId, testResultsByTestAndUser]);
 
   // Загрузка отчетов и результатов лабораторных работ
   useEffect(() => {
@@ -159,15 +170,12 @@ const UserStatisticPage: React.FC = () => {
   };
 
   // Получение результата теста
-  const getTestResult = (testId: string) => {
-    if (!testResultByTestAndUser) return null;
-    
-    return Array.isArray(testResultByTestAndUser)
-      ? testResultByTestAndUser.find((r) => r.testId === testId)
-      : testResultByTestAndUser.testId === testId
-      ? testResultByTestAndUser
-      : null;
-  };
+const getTestResult = (testId: string) => {
+  const resultList = testResultsByTestAndUser[testId];
+  const result = Array.isArray(resultList) ? resultList[0] : resultList || null;
+  console.log("Результат теста:", { testId, result });
+  return result;
+};
 
   // Получение отчета по лабораторной работе
   const getLabReport = (labId: string) => {
@@ -239,7 +247,6 @@ const UserStatisticPage: React.FC = () => {
           </span>
         </div>
       </div>
-
       <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
         <h2 className="text-xl font-semibold mb-4">Тесты</h2>
         {tests.length === 0 ? (
@@ -249,20 +256,21 @@ const UserStatisticPage: React.FC = () => {
             {tests.map((test) => {
               const result = getTestResult(test.id);
               const maxScore = getMaxScoreForTest(test.id);
+              
               return (
                 <div key={test.id} className="border-b pb-4">
                   <div className="font-medium">{test.title}</div>
                   <div className="mt-2">
                     <span className="mr-2">Баллы:</span>
                     <span className="font-bold">
-                      {result?.score ?? "Не пройден"}
+                      {result ? result.score : "Не пройден"}
                     </span>
                     <span className="text-gray-500 ml-2">/{maxScore}</span>
                   </div>
-                  {result?.createdAt && (
+                  {result?.completedAt && (
                     <div className="text-sm text-gray-500 mt-1">
                       Пройден:{" "}
-                      {new Date(result.createdAt).toLocaleDateString()}
+                      {new Date(result.completedAt).toLocaleDateString()}
                     </div>
                   )}
                 </div>

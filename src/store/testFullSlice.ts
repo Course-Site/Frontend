@@ -46,7 +46,7 @@ export const createFullTest = createAsyncThunk<
           testId: test.id,
         };
 
-        const questionResponse = await fetch('http://localhost:4200/api/v1/testQuestion/create', {
+        const questionResponse = await fetch('http://localhost:4200/api/v1/test_question/create', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(questionData),
@@ -76,7 +76,7 @@ export const createFullTest = createAsyncThunk<
           number: i + 1,
         };
         
-        const answerResponse = await fetch('http://localhost:4200/api/v1/testAnswer/create', {
+        const answerResponse = await fetch('http://localhost:4200/api/v1/test_answer/create', {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(answerData),

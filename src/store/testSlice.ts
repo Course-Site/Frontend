@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { Test, TestResult } from "../types/types";
+import { Test } from "../types/types";
 import { getAuthHeaders } from "./apiUtils";
 
 interface TestState {
@@ -102,34 +102,6 @@ export const deleteTest = createAsyncThunk<string, string, { rejectValue: string
   }
 );
 
-export const submitTestAnswers = createAsyncThunk<TestResult, { 
-  testId: string; 
-  answers: Array<{ 
-    questionId: string; 
-    selectedAnswerIds: string[] 
-  }> 
-}, { rejectValue: string }>(
-  'test/submitAnswers',
-  async (payload, { rejectWithValue }) => {
-    try {
-      const response = await fetch('http://localhost:4200/api/v1/test-evaluate/submit', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          ...payload,
-          testId: payload.testId.replace(/['"]/g, '').trim()
-        })
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Ошибка при отправке ответов');
-      }
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
-    }
-  }
-);
 
 const testSlice = createSlice({
   name: "test",
