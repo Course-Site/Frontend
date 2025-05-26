@@ -56,6 +56,32 @@ export const createTopic = createAsyncThunk<Topic, { title: string; description?
   }
 );
 
+export const updateTopic = createAsyncThunk<Topic, { id: string; title: string; description?: string }, { rejectValue: string }>(
+  "learning/updateTopic",
+  async ({ id, title, description = "" }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:4200/api/v1/topic/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title, description }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Ошибка обновления темы");
+
+      return result;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Неизвестная ошибка"
+      );
+    }
+  }
+);
+
 export const deleteTopic = createAsyncThunk<string, string, { rejectValue: string }>(
   "learning/deleteTopic",
   async (id, { rejectWithValue }) => {
@@ -111,6 +137,21 @@ const topicSlice = createSlice({
       .addCase(createTopic.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Ошибка при создании темы";
+      })
+      .addCase(updateTopic.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateTopic.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.topics.findIndex(topic => topic.id === action.payload.id);
+        if (index !== -1) {
+          state.topics[index] = action.payload;
+        }
+      })
+      .addCase(updateTopic.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Ошибка при обновлении темы";
       })
       .addCase(deleteTopic.pending, (state) => {
         state.loading = true;

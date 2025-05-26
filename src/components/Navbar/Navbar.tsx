@@ -2,16 +2,21 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X, EyeOff, Eye } from "lucide-react";
 import bannerLogo from "../../assets/images/bannerLogo.png";
+import bannerLogo1 from "../../assets/images/bannerLogo1.png";
 import Button from "../Button/Button";
 import AuthModal from "../Modals/AuthModal";
 import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../store/authSlice"; // Импортируем action для выхода из аккаунта
+import { logout } from "../../store/authSlice";
 import { RootState } from "../../store/store";
 
-const Navbar = () => {
+interface NavbarProps {
+  onBannerVisibilityChange?: (isVisible: boolean) => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onBannerVisibilityChange }) => {
   const dispatch = useDispatch();
-  const { user } = useSelector((state: RootState) => state.auth); // Получаем пользователя из Redux состояния
+  const { user } = useSelector((state: RootState) => state.auth);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bannerHidden, setBannerHidden] = useState(false);
@@ -21,6 +26,11 @@ const Navbar = () => {
     const storedBannerStatus = localStorage.getItem("bannerHidden");
     if (storedBannerStatus === "true") {
       setBannerHidden(true);
+      if (onBannerVisibilityChange) {
+        onBannerVisibilityChange(false);
+      }
+    } else if (onBannerVisibilityChange) {
+      onBannerVisibilityChange(true);
     }
 
     const handleScroll = () => {
@@ -28,18 +38,21 @@ const Navbar = () => {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [onBannerVisibilityChange]);
 
   const toggleBanner = () => {
     setBannerHidden((prev) => {
       const newStatus = !prev;
       localStorage.setItem("bannerHidden", newStatus.toString());
+      if (onBannerVisibilityChange) {
+        onBannerVisibilityChange(!newStatus);
+      }
       return newStatus;
     });
   };
 
   const handleLogout = () => {
-    dispatch(logout()); // Диспатчим action для выхода
+    dispatch(logout());
   };
 
   return (
@@ -54,7 +67,7 @@ const Navbar = () => {
             className="hidden lg:flex justify-center items-center bg-neutral-50 text-black py-4"
           >
             <div className="flex items-center justify-center gap-7">
-              <img src={bannerLogo} className="w-30 rounded-full" />
+              <img src={bannerLogo} className="w-30 rounded-full" alt="Логотип баннера" />
               <div className="flex flex-col gap-1.5">
                 <h1 className="text-3xl font-bold font-tektur tracking-wider">
                   Администрирование вычислительных сетей
@@ -67,7 +80,7 @@ const Navbar = () => {
           </motion.div>
         )}
 
-        {/* Навбар (всегда вверху на мобильных устройствах) */}
+        {/* Навбар */}
         <motion.nav
           initial={{ y: 0 }}
           animate={{ top: bannerHidden || scrolled || window.innerWidth < 1024 ? "0rem" : "9rem" }}
@@ -83,7 +96,7 @@ const Navbar = () => {
                 </NavLink>
               </li>
               <li>
-                <NavLink to='/learning' className="text-white hover:text-amber-500 transition">
+                <NavLink to="/learning" className="text-white hover:text-amber-500 transition">
                   Обучение
                 </NavLink>
               </li>
@@ -99,7 +112,7 @@ const Navbar = () => {
               </li>
             </ul>
 
-            {/* Кнопки слева */}
+            {/* Кнопки справа */}
             <div className="hidden lg:flex items-center gap-5 font-istok">
               {user ? (
                 <Button variant="primary" className="px-3 py-2" onClick={handleLogout}>
@@ -110,9 +123,7 @@ const Navbar = () => {
                   Войти
                 </Button>
               )}
-              <a href="#" className="text-xl font-bold text-white">
-                Логотип
-              </a>
+              <img src={bannerLogo1} alt="Логотип" className="h-11 w-auto rounded-md" />
               <div className="group relative flex justify-center">
                 <Button variant="primary" onClick={toggleBanner} className="py-1 px-2">
                   {bannerHidden ? <Eye /> : <EyeOff />}
@@ -124,7 +135,11 @@ const Navbar = () => {
             </div>
 
             {/* Кнопка для мобильного меню */}
-            <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden text-white">
+            <button 
+              onClick={() => setMenuOpen(!menuOpen)} 
+              className="lg:hidden text-white"
+              aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
+            >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -136,26 +151,42 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="lg:hidden bg-neutral-900 text-white py-4 absolute w-full top-14 left-0 shadow-md"
+            className="lg:hidden bg-neutral-900 text-white py-4 absolute w-full top-14 left-0 shadow-md z-40"
           >
             <ul className="flex flex-col items-center gap-4">
               <li>
-                <NavLink to="/" className="hover:text-amber-500 transition">
+                <NavLink 
+                  to="/" 
+                  className="hover:text-amber-500 transition"
+                  onClick={() => setMenuOpen(false)}
+                >
                   Главная
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/learning" className="hover:text-amber-500 transition">
+                <NavLink 
+                  to="/learning" 
+                  className="hover:text-amber-500 transition"
+                  onClick={() => setMenuOpen(false)}
+                >
                   Обучение
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/profile" className="hover:text-amber-500 transition">
+                <NavLink 
+                  to="/profile" 
+                  className="hover:text-amber-500 transition"
+                  onClick={() => setMenuOpen(false)}
+                >
                   Профиль
                 </NavLink>
               </li>
               <li>
-                <NavLink to="/ai" className="hover:text-amber-500 transition">
+                <NavLink 
+                  to="/ai" 
+                  className="hover:text-amber-500 transition"
+                  onClick={() => setMenuOpen(false)}
+                >
                   Нейросеть
                 </NavLink>
               </li>

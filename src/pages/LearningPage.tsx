@@ -75,7 +75,7 @@ const LearningPage: React.FC = () => {
   const isAdmin = user?.role === "admin";
 
   return (
-    <div className="max-w-4xl mx-auto mt-10">
+    <div className="max-w-4xl mx-auto mt-10 mb-20">
       <h1 className="text-3xl font-bold mb-6">Обучение</h1>
 
       {topicsLoading && <p>Загрузка тем...</p>}

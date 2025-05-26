@@ -100,6 +100,12 @@ const UserStatisticPage: React.FC = () => {
     return lab?.maxScore || 100; // Значение по умолчанию, если maxScore не указан
   };
 
+  // Получение максимального балла для какого-то теста
+  const getMaxScoreForTest = (testId: string) => {
+    const test = tests.find(t => t.id === testId);
+    return test?.maxScore || 100; // Значение по умолчанию, если maxScore не указан
+  };
+
   // Обработчик изменения оценки
   const handleScoreChange = (labId: string, value: string) => {
     if (value === '') {
@@ -219,12 +225,12 @@ const UserStatisticPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-6 py-6">
+    <div className="container mx-auto px-6 py-6 mb-10">
       <h1 className="text-2xl font-bold mb-4">
         Статистика пользователя ID: {userId}
       </h1>
 
-      <div className="bg-blue-50 p-4 rounded-lg mb-6">
+      <div className="bg-blue-50 p-4 rounded-lg mb-10">
         <h2 className="text-xl font-semibold mb-2">Общая статистика</h2>
         <div className="text-lg">
           Общее количество баллов:{" "}
@@ -242,6 +248,7 @@ const UserStatisticPage: React.FC = () => {
           <div className="space-y-4">
             {tests.map((test) => {
               const result = getTestResult(test.id);
+              const maxScore = getMaxScoreForTest(test.id);
               return (
                 <div key={test.id} className="border-b pb-4">
                   <div className="font-medium">{test.title}</div>
@@ -250,7 +257,7 @@ const UserStatisticPage: React.FC = () => {
                     <span className="font-bold">
                       {result?.score ?? "Не пройден"}
                     </span>
-                    <span className="text-gray-500 ml-2">/100</span>
+                    <span className="text-gray-500 ml-2">/{maxScore}</span>
                   </div>
                   {result?.createdAt && (
                     <div className="text-sm text-gray-500 mt-1">

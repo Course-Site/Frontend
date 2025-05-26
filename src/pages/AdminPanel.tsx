@@ -43,9 +43,12 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 mb-10">
       <h3 className="text-lg font-semibold mb-4">Список пользователей</h3>
-      <Button variant="primary" onClick={() => setIsFormVisible(true)}>
+      <Button 
+        variant="primary" 
+        className="p-2"
+        onClick={() => setIsFormVisible(true)}>
         Добавить пользователя
       </Button>
 

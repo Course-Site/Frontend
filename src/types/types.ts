@@ -37,6 +37,7 @@ export interface Test {
   title: string;
   description: string;
   topicId: string;
+  maxScore: number;
 }
 
 export interface TestResult {

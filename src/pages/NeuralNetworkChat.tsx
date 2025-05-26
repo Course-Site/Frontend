@@ -82,7 +82,7 @@ const NeuralNetworkChat = () => {
   }, [sendMessage]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div className="min-h-screen mb-10 flex items-center justify-center p-4">
       <div className="max-w-3xl w-full bg-white rounded-xl shadow-md overflow-hidden">
         <div className="bg-blue-700 text-white p-4 text-center text-2xl">
           Чат с GigaChat

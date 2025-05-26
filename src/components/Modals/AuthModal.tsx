@@ -85,7 +85,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, requestedPath })
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               />
-              <Button variant="secondary" onClick={handleSubmit} disabled={loading}>
+              <Button variant="secondary" onClick={handleSubmit} disabled={loading} className="p-3 border-amber-950">
                 {loading ? "Загрузка..." : "Войти"}
               </Button>
             </div>

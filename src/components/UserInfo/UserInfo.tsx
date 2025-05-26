@@ -5,16 +5,11 @@ interface UserInfoProps {
   avatarUrl?: string;
 }
 
-const UserInfo: React.FC<UserInfoProps> = ({ name, avatarUrl }) => {
+const UserInfo: React.FC<UserInfoProps> = ({ name}) => {
   return (
     <div className="flex items-center gap-4 p-4 border-b">
-      <img
-        src={avatarUrl || "/default-avatar.png"}
-        alt="Аватар"
-        className="w-16 h-16 rounded-full object-cover"
-      />
       <div>
-        <h2 className="text-xl font-semibold">{name}</h2>
+        <h2 className="text-xl font-semibold">Username: {name}</h2>
       </div>
     </div>
   );

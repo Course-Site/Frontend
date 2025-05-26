@@ -7,10 +7,15 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  // Состояние для отслеживания видимости баннера
+  const [isBannerVisible, setIsBannerVisible] = React.useState(true);
+
   return (
     <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <div className="flex-grow pt-16">
+      {/* Передаем callback в Navbar для обновления состояния */}
+      <Navbar onBannerVisibilityChange={setIsBannerVisible} />
+      {/* Меняем padding-top в зависимости от видимости баннера */}
+      <div className={`flex-grow ${isBannerVisible ? 'pt-50' : 'pt-17'}`}>
         <main className="container mx-auto">
           {children}
         </main>
@@ -19,6 +24,5 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     </div>
   );
 };
-
 
 export default Layout;

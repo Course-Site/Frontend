@@ -56,10 +56,10 @@ const AddUserForm: React.FC<AddUserFormProps> = ({ onSuccess, onCancel }) => {
         <p className="text-blue-500">Добавление...</p>
       ) : (
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onCancel}>
+          <Button variant="secondary" onClick={onCancel} className="p-1"> 
             Отмена
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
+          <Button variant="primary" onClick={handleSubmit} className="p-1">
             Создать
           </Button>
         </div>

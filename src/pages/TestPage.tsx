@@ -11,7 +11,7 @@ const TestPage: React.FC = () => {
     'idle' | 'loading' | 'success' | 'error'
   >('idle');
   const [testResult, setTestResult] = useState<{
-    totalScore: number;
+    score: number;
     totalQuestions: number;
   } | null>(null);
 
@@ -73,7 +73,7 @@ const handleSubmitAnswers = async () => {
 
     if (typeof result?.score === 'number') {
       setTestResult({
-        totalScore: result.score,
+        score: result.score,
         totalQuestions: questions.length,
       });
       setSubmissionState('success');
@@ -126,14 +126,14 @@ const handleSubmitAnswers = async () => {
         {testResult && (
           <div
             className={`p-4 rounded mb-4 ${
-              testResult.totalScore / testResult.totalQuestions >= 0.7
+              testResult.score / testResult.totalQuestions >= 0.7
                 ? 'bg-green-100 text-green-800'
                 : 'bg-red-100 text-red-800'
             }`}
           >
             <p className="font-semibold">
-              Ваш результат: {testResult.totalScore} из {testResult.totalQuestions} (
-              {Math.round((testResult.totalScore / testResult.totalQuestions) * 100)}%)
+              Ваш результат: {testResult.score} из {testResult.totalQuestions} (
+              {Math.round((testResult.score / testResult.totalQuestions) * 100)}%)
             </p>
           </div>
         )}
