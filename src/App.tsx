@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProfilePage from "./pages/ProfilePage";
 import PrivateRoute from "./routes/PrivateRoute";
 import AuthModal from "./components/Modals/AuthModal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LecturePage from "./pages/LecturePage";
 import LectureEditor from "./pages/LectureEditor";
 import LabPage from "./pages/LabPage";
@@ -14,8 +14,18 @@ import TestEditor from "./pages/TestEditor";
 import TestPage from "./pages/TestPage";
 import NeuralNetworkChat from "./pages/NeuralNetworkChat";
 import UserStatisticPage from "./pages/UserStatisticPage";
+import { AppDispatch} from "../src/store/store";
+import { initAuth } from "./store/authSlice";
+import { RootState } from "./store/store";
+import { useDispatch, useSelector } from "react-redux";
 
 function App() {
+  const dispatch = useDispatch<AppDispatch>();
+   const { initialized } = useSelector((state: RootState) => state.auth);
+  useEffect(() => {
+    dispatch(initAuth());
+  }, [dispatch]);
+  
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [requestedPath, setRequestedPath] = useState<string | null>(null);
 
@@ -29,7 +39,45 @@ function App() {
     setRequestedPath(null);
   };
 
+if (!initialized) {
   return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+      backgroundColor: '#757884',
+      color: '#f5f5f5',
+      flexDirection: 'column',
+      fontFamily: 'Arial, sans-serif',
+    }}>
+      <div style={{ marginBottom: 20 }}>
+        <div className="loader"></div>
+      </div>
+      <div>Загрузка...</div>
+
+      {/* Стили для лоадера */}
+      <style>{`
+        .loader {
+          border: 6px solid #f3f3f3;
+          border-top: 6px solid #f78f1e; /* оранжевый */
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+          box-shadow: 0 0 10px #f78f1e;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+  return (
+    
     <Router>
       <Layout>
         <Routes>

@@ -15,12 +15,14 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  initialized: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
   loading: false,
   error: null,
+  initialized: false,
 };
 
 interface SignUpData {
@@ -134,6 +136,15 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(initAuth.fulfilled, (state, action) => {
+        state.initialized = true;
+        if (action.payload) {
+          state.user = action.payload;
+        }
+      })
+      .addCase(initAuth.rejected, (state) => {
+        state.initialized = true;
+      })
       .addCase(signUp.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -144,7 +155,7 @@ const authSlice = createSlice({
       })
       .addCase(signUp.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Ошибка регистрации";
+        state.error = action.payload ?? "Ошибка регистрации";
       })
       .addCase(signIn.pending, (state) => {
         state.loading = true;
@@ -156,12 +167,7 @@ const authSlice = createSlice({
       })
       .addCase(signIn.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Ошибка входа";
-      })
-      .addCase(initAuth.fulfilled, (state, action) => {
-        if (action.payload) {
-          state.user = action.payload;
-        }
+        state.error = action.payload ?? "Ошибка входа";
       });
   },
 });
